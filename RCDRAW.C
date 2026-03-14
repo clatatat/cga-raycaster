@@ -1,5 +1,5 @@
 /* RCDRAW.C - Text-mode rendering engine with page flipping       */
-/* Renders 40x25 frame via DMA to CGA VRAM, flips display page   */
+/* Supports 40-col (mode 1) and 80-col (mode 3) via settings     */
 
 #include "raycast.h"
 
@@ -27,7 +27,40 @@ static short safe_div(short a, short b)
 }
 
 /*-----------------------------------------------------------------
-  init_video - Switch to CGA mode 1 (40x25 color text), hide cursor
+  set_columns - Switch video mode for the given column count.
+  40 = CGA mode 1 (40x25), 80 = CGA mode 3 (80x25).
+  Clears screen, hides cursor, resets page pointers.
+-----------------------------------------------------------------*/
+void set_columns(unsigned char cols)
+{
+    union REGS r;
+
+    r.h.ah = BIOS_SETMODE;
+    r.h.al = (cols == 80) ? 0x03 : CGA_MODE1;
+    int86(VIDEO_INT, &r, &r);
+
+    /* Hide cursor */
+    r.h.ah = BIOS_SETCUR;
+    r.h.ch = 0x20;
+    r.h.cl = 0x00;
+    int86(VIDEO_INT, &r, &r);
+
+    /* Page pointers: page size differs by mode */
+    pages[0] = VMEM_PAGE0;
+    if (cols == 80)
+        pages[1] = (VIDMEM)((CGA_SEG << 16) | 0x1000L);
+    else
+        pages[1] = VMEM_PAGE1;
+
+    draw_page = 1;
+
+    r.h.ah = BIOS_SETPAGE;
+    r.h.al = 0;
+    int86(VIDEO_INT, &r, &r);
+}
+
+/*-----------------------------------------------------------------
+  init_video - Save original mode, then set game video mode
 -----------------------------------------------------------------*/
 void init_video(void)
 {
@@ -38,28 +71,7 @@ void init_video(void)
     int86(VIDEO_INT, &r, &r);
     orig_mode = r.h.al;
 
-    /* Set CGA 40x25 color text mode */
-    r.h.ah = BIOS_SETMODE;
-    r.h.al = CGA_MODE1;
-    int86(VIDEO_INT, &r, &r);
-
-    /* Hide cursor: set cursor shape to invisible (start > end) */
-    r.h.ah = BIOS_SETCUR;
-    r.h.ch = 0x20;     /* bit 5 = cursor off on CGA */
-    r.h.cl = 0x00;
-    int86(VIDEO_INT, &r, &r);
-
-    /* Initialize page pointers */
-    pages[0] = VMEM_PAGE0;
-    pages[1] = VMEM_PAGE1;
-
-    /* Start displaying page 0, drawing to page 1 */
-    draw_page = 1;
-
-    /* Set active display page to 0 */
-    r.h.ah = BIOS_SETPAGE;
-    r.h.al = 0;
-    int86(VIDEO_INT, &r, &r);
+    set_columns(settings.columns);
 }
 
 /*-----------------------------------------------------------------
@@ -107,17 +119,27 @@ void render_frame(RayHit hits[])
 {
     VIDMEM scr;
     int x, y;
+    int cols = settings.columns;
 
     scr = pages[draw_page];
 
-    for (x = 0; x < SCREEN_W; x++)
+    for (x = 0; x < cols; x++)
     {
         int wallHeight;
         int drawStart, drawEnd;
         short texStep, texPos;
         unsigned short far *tex;
         unsigned char texX;
-        int shade;              /* 1 = dim (far away), 0 = bright */
+
+        /* Ray hit nothing (render distance limit) */
+        if (hits[x].dist == 0) {
+            int mid = SCREEN_H / 2;
+            for (y = 0; y < mid; y++)
+                *(scr + y * cols + x) = CEIL_CELL;
+            for (y = mid; y < SCREEN_H; y++)
+                *(scr + y * cols + x) = FLOOR_CELL;
+            continue;
+        }
 
         /* Wall height in screen rows = WALL_CONST / perpDist */
         if (hits[x].dist > 0)
@@ -146,15 +168,11 @@ void render_frame(RayHit hits[])
             texPos = (short)(((wallHeight - SCREEN_H) >> 1) * texStep);
         }
 
-        /* Distance shading: dim walls farther than ~4 map units */
-        /* Also dim horizontal walls slightly for depth contrast */
-        shade = (hits[x].dist > INT2FIX(4)) || hits[x].side;
-
         /* --- Draw the column --- */
 
         /* Ceiling */
         for (y = 0; y < drawStart; y++)
-            *(scr + y * SCREEN_W + x) = CEIL_CELL;
+            *(scr + y * cols + x) = CEIL_CELL;
 
         /* Wall */
         for (y = drawStart; y < drawEnd; y++)
@@ -165,16 +183,12 @@ void render_frame(RayHit hits[])
             texY = (texPos >> 8) & TEX_MASK;
             texel = tex[texY * TEX_SIZE + texX];
 
-            /* Apply distance shading: clear intensity bit (0x08) */
-            if (shade)
-                texel &= 0xF7FF;   /* clear bit 3 of attribute byte */
-
-            *(scr + y * SCREEN_W + x) = texel;
+            *(scr + y * cols + x) = texel;
             texPos += texStep;
         }
 
         /* Floor */
         for (y = drawEnd; y < SCREEN_H; y++)
-            *(scr + y * SCREEN_W + x) = FLOOR_CELL;
+            *(scr + y * cols + x) = FLOOR_CELL;
     }
 }

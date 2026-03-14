@@ -29,6 +29,7 @@ extern short cdecl fix_div(short a, short b);
    ================================================================ */
 #define SCREEN_W     40
 #define SCREEN_H     25
+#define MAX_COLS     80        /* max supported columns (80-col mode) */
 #define SCREEN_CELLS 1000   /* SCREEN_W * SCREEN_H */
 
 /* ================================================================
@@ -127,6 +128,7 @@ typedef struct {
    Keyboard scan codes (AT/XT make codes)
    ================================================================ */
 #define SC_ESC       0x01
+#define SC_ENTER     0x1C
 #define SC_W         0x11
 #define SC_A         0x1E
 #define SC_S         0x1F
@@ -143,6 +145,32 @@ extern const short sin_tab[256];
 extern const short cos_tab[256];
 
 /* ================================================================
+   Settings - run-time options changeable from the menu
+   ================================================================ */
+typedef struct {
+    unsigned char lcd_palette;   /* 0=OFF, 1=ON */
+    unsigned char use_16x16;     /* 0=OFF, 1=ON (forced OFF if lcd_palette) */
+    unsigned char columns;       /* 40 or 80 */
+    unsigned char render_dist;   /* 0=Infinite, 8, 16, or 24 tiles */
+} Settings;
+
+extern Settings settings;
+
+/* ================================================================
+   Controls - rebindable key scan codes
+   ================================================================ */
+typedef struct {
+    unsigned char sc_forward;
+    unsigned char sc_backward;
+    unsigned char sc_turn_left;
+    unsigned char sc_turn_right;
+    unsigned char sc_strafe_left;
+    unsigned char sc_strafe_right;
+} Controls;
+
+extern Controls controls;
+
+/* ================================================================
    Function prototypes
    ================================================================ */
 
@@ -152,6 +180,7 @@ void cast_rays(Player *p, Map *m, RayHit hits[]);
 /* RCDRAW.C - video init, rendering, page flipping */
 void init_video(void);
 void restore_video(void);
+void set_columns(unsigned char cols);
 void render_frame(RayHit hits[]);
 void flip_page(void);
 
@@ -167,5 +196,8 @@ extern unsigned char key_state[];
 /* RCMAP.C - map data and access */
 void map_init(Map *m);
 unsigned char map_get(Map *m, int x, int y);
+
+/* RCMENU.C - options menu */
+int show_menu(void);
 
 #endif /* RAYCAST_H */

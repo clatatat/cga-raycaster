@@ -1,19 +1,9 @@
-/* RCCAST.C - DDA raycasting engine for 40-column text mode       */
+/* RCCAST.C - DDA raycasting engine for text-mode renderer         */
 /* Vector-based approach (Wolfenstein-style camera plane)          */
 /* Fisheye prevention is inherent: uses perpendicular distance    */
+/* Supports variable column count (40 or 80) and render distance  */
 
 #include "raycast.h"
-
-/* Precomputed camera-space X offsets for each screen column.     */
-/* cameraX = 2*x/SCREEN_W - 1, in 8.8 fixed-point.               */
-/* Maps column 0 -> -256 (left), column 19/20 -> ~0, column 39 -> +243 */
-static const short cam_off[SCREEN_W] = {
-    -256,-243,-230,-218,-205,-192,-179,-167,
-    -154,-141,-128,-115,-103, -90, -77, -64,
-     -51, -39, -26, -13,   0,  13,  26,  39,
-      51,  64,  77,  90, 103, 115, 128, 141,
-     154, 167, 179, 192, 205, 218, 230, 243
-};
 
 /* Absolute value for fix8 */
 #define FIX_ABS(x)  ((x) < 0 ? -(x) : (x))
@@ -53,36 +43,39 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
     short dirX, dirY;       /* player direction vector (8.8 FP)   */
     short planeX, planeY;   /* camera plane vector (8.8 FP)       */
     int x;
+    int cols = settings.columns;
+    int rdist = (int)settings.render_dist;
 
     /* Direction from angle lookup */
     dirX = cos_tab[p->angle];
     dirY = sin_tab[p->angle];
 
     /* Camera plane = perpendicular to dir, scaled by FOV_PLANE    */
-    /* Perpendicular to (dirX, dirY) is (-dirY, dirX)              */
-    /* Scale by FOV_PLANE/FIX_ONE = 169/256 ~ 0.66                */
     planeX = -fix_mul(dirY, FOV_PLANE);
     planeY =  fix_mul(dirX, FOV_PLANE);
 
-    for (x = 0; x < SCREEN_W; x++)
+    for (x = 0; x < cols; x++)
     {
-        short rayDirX, rayDirY;     /* ray direction (8.8 FP)     */
-        short deltaDistX, deltaDistY; /* distance between grid lines */
-        short sideDistX, sideDistY; /* distance to next grid line */
-        int mapX, mapY;             /* current map tile coords    */
-        int stepX, stepY;           /* +1 or -1 step direction    */
-        int side;                   /* 0=vertical, 1=horizontal   */
+        short rayDirX, rayDirY;
+        short deltaDistX, deltaDistY;
+        short sideDistX, sideDistY;
+        int mapX, mapY;
+        int startMapX, startMapY;
+        int stepX, stepY;
+        int side;
         unsigned char tile;
         short camX;
 
-        /* Ray direction = dir + plane * cameraX */
-        camX = cam_off[x];
+        /* cameraX = (2*x/cols - 1) in 8.8 fixed-point */
+        camX = (short)(((long)(2 * x - cols) << 8) / cols);
         rayDirX = dirX + fix_mul(planeX, camX);
         rayDirY = dirY + fix_mul(planeY, camX);
 
         /* Player map cell */
         mapX = FIX2INT(p->px);
         mapY = FIX2INT(p->py);
+        startMapX = mapX;
+        startMapY = mapY;
 
         /* deltaDist = abs(FIX_ONE / rayDir component)             */
         /* This is the distance the ray travels to cross one full  */
@@ -129,6 +122,16 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
                 side = 1;   /* horizontal wall (perpendicular to Y) */
             }
 
+            /* Render distance limit: stop if ray traveled too far */
+            if (rdist > 0) {
+                int dx = mapX - startMapX;
+                int dy = mapY - startMapY;
+                if (dx < 0) dx = -dx;
+                if (dy < 0) dy = -dy;
+                if (dx > rdist || dy > rdist)
+                    break;  /* tile stays TILE_EMPTY = no hit */
+            }
+
             /* Check if ray is out of bounds (safety) */
             if (mapX < 0 || mapX >= (int)m->w ||
                 mapY < 0 || mapY >= (int)m->h) {
@@ -137,6 +140,15 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
             }
 
             tile = m->data[(unsigned)mapY * m->w + (unsigned)mapX];
+        }
+
+        /* No wall hit within render distance */
+        if (tile == TILE_EMPTY) {
+            hits[x].dist = 0;
+            hits[x].tile = TILE_EMPTY;
+            hits[x].texX = 0;
+            hits[x].side = 0;
+            continue;
         }
 
         /* Calculate perpendicular distance (prevents fisheye)     */

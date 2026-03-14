@@ -76,15 +76,10 @@ void remove_keyboard(void)
   process_input - Read key states and update player position/angle
   
   Controls:
-    W / Up Arrow    = move forward
-    S / Down Arrow  = move backward
-    A               = turn left
-    D               = turn right
-    Left Arrow      = strafe left
-    Right Arrow     = strafe right
-    ESC             = quit
+    Rebindable via controls struct (see RCMENU.C)
+    ESC = open menu
   
-  Returns 1 to continue, 0 if ESC was pressed.
+  Returns 1 to continue, 2 if ESC was pressed (open menu).
 -----------------------------------------------------------------*/
 int process_input(Player *p, Map *m)
 {
@@ -92,15 +87,15 @@ int process_input(Player *p, Map *m)
     short strafeX, strafeY;
     fix8 newX, newY;
 
-    /* ESC = quit */
+    /* ESC = open menu */
     if (key_state[SC_ESC])
-        return 0;
+        return 2;
 
-    /* Turn left/right (A/D keys) */
-    if (key_state[SC_A])
-        p->angle -= TURN_SPEED;     /* wraps naturally (unsigned char) */
+    /* Turn left/right */
+    if (key_state[controls.sc_turn_left])
+        p->angle -= TURN_SPEED;
 
-    if (key_state[SC_D])
+    if (key_state[controls.sc_turn_right])
         p->angle += TURN_SPEED;
 
     /* Movement direction from angle */
@@ -111,18 +106,18 @@ int process_input(Player *p, Map *m)
     strafeX = -sin_tab[p->angle];
     strafeY =  cos_tab[p->angle];
 
-    /* Forward / backward (W/S or Up/Down) */
-    if (key_state[SC_W] || key_state[SC_UP]) {
+    /* Forward */
+    if (key_state[controls.sc_forward]) {
         newX = p->px + fix_mul(MOVE_SPEED, moveX);
         newY = p->py + fix_mul(MOVE_SPEED, moveY);
-        /* Collision: check X and Y independently for wall sliding */
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
             p->px = newX;
         if (map_get(m, FIX2INT(p->px), FIX2INT(newY)) == TILE_EMPTY)
             p->py = newY;
     }
 
-    if (key_state[SC_S] || key_state[SC_DOWN]) {
+    /* Backward */
+    if (key_state[controls.sc_backward]) {
         newX = p->px - fix_mul(MOVE_SPEED, moveX);
         newY = p->py - fix_mul(MOVE_SPEED, moveY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
@@ -131,8 +126,8 @@ int process_input(Player *p, Map *m)
             p->py = newY;
     }
 
-    /* Strafe left/right (arrow keys) */
-    if (key_state[SC_LEFT]) {
+    /* Strafe left */
+    if (key_state[controls.sc_strafe_left]) {
         newX = p->px - fix_mul(STRAFE_SPEED, strafeX);
         newY = p->py - fix_mul(STRAFE_SPEED, strafeY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
@@ -141,7 +136,8 @@ int process_input(Player *p, Map *m)
             p->py = newY;
     }
 
-    if (key_state[SC_RIGHT]) {
+    /* Strafe right */
+    if (key_state[controls.sc_strafe_right]) {
         newX = p->px + fix_mul(STRAFE_SPEED, strafeX);
         newY = p->py + fix_mul(STRAFE_SPEED, strafeY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)

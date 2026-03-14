@@ -1,12 +1,16 @@
 /* RAYCAST.C - Main entry point for CGA text-mode raycaster       */
-/* Target: Microsoft QuickC 2.5, CGA mode 1 (40x25), 8086/8088   */
+/* Target: Microsoft QuickC 2.5, CGA text mode, 8086/8088         */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "raycast.h"
 
-/* Ray hit buffer - one result per screen column */
-static RayHit hits[SCREEN_W];
+/* Global settings and controls with defaults */
+Settings settings  = { 0, 0, 40, 0 };   /* LCD=OFF, 16x16=OFF, 40 cols, Infinite */
+Controls controls  = { SC_W, SC_S, SC_A, SC_D, SC_LEFT, SC_RIGHT };
+
+/* Ray hit buffer - sized for max columns */
+static RayHit hits[MAX_COLS];
 
 /* Game state */
 static Player player;
@@ -27,7 +31,7 @@ static void cleanup(void)
 -----------------------------------------------------------------*/
 int main(void)
 {
-    int running = 1;
+    int result;
 
     /* Set up the map and player start position */
     map_init(&level);
@@ -38,22 +42,25 @@ int main(void)
     /* Register cleanup for abnormal exits */
     atexit(cleanup);
 
-    /* Switch to CGA 40x25 text mode and install keyboard ISR */
+    /* Switch to CGA text mode and install keyboard ISR */
     init_video();
     install_keyboard();
 
     /* === Main loop ============================================= */
-    while (running) {
-        /* Handle player movement and turning; returns 0 on ESC */
-        running = process_input(&player, &level);
+    for (;;) {
+        result = process_input(&player, &level);
 
-        /* Cast all 40 rays */
+        if (result == 2) {
+            /* ESC pressed: show menu */
+            result = show_menu();
+            if (result == 0) break;     /* quit selected */
+            /* Resume: reinit video (clears menu, resets pages) */
+            set_columns(settings.columns);
+            continue;
+        }
+
         cast_rays(&player, &level, hits);
-
-        /* Draw the frame to the hidden page */
         render_frame(hits);
-
-        /* Swap visible/draw pages */
         flip_page();
     }
 
