@@ -118,9 +118,11 @@ void flip_page(void)
 void render_frame(RayHit hits[])
 {
     VIDMEM scr;
+    unsigned short far **active_tex;
     int x, y;
     int cols = settings.columns;
 
+    active_tex = settings.lcd_palette ? lcd_tex_table : tex_table;
     scr = pages[draw_page];
 
     for (x = 0; x < cols; x++)
@@ -155,7 +157,7 @@ void render_frame(RayHit hits[])
         drawEnd = drawStart + wallHeight;
 
         /* Get texture pointer for this tile */
-        tex = tex_table[hits[x].tile];
+        tex = active_tex[hits[x].tile];
         texX = hits[x].texX;
 
         /* Texture Y stepping: map wallHeight rows to TEX_SIZE texels */

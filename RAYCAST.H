@@ -201,6 +201,9 @@ void flip_page(void);
 /* RCTEX.C - texture data */
 extern unsigned short far *tex_table[];
 
+/* RCLCD.C - LCD-optimised texture data */
+extern unsigned short far *lcd_tex_table[];
+
 /* RCINPUT.C - keyboard ISR and input processing */
 void install_keyboard(void);
 void remove_keyboard(void);
