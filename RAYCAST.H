@@ -137,6 +137,10 @@ typedef struct {
 #define SC_DOWN      0x50
 #define SC_LEFT      0x4B
 #define SC_RIGHT     0x4D
+#define SC_I         0x17
+#define SC_O         0x18
+#define SC_P         0x19
+#define SC_SPACE     0x39
 
 /* ================================================================
    Extern declarations - trig tables (RCMATH.C)
@@ -166,9 +170,19 @@ typedef struct {
     unsigned char sc_turn_right;
     unsigned char sc_strafe_left;
     unsigned char sc_strafe_right;
+    unsigned char sc_primary;
+    unsigned char sc_secondary;
+    unsigned char sc_tertiary;
+    unsigned char sc_quaternary;
 } Controls;
 
 extern Controls controls;
+
+/* Key-action flags: set each frame by process_input() */
+extern unsigned char keyflag1;   /* Primary action   */
+extern unsigned char keyflag2;   /* Secondary action */
+extern unsigned char keyflag3;   /* Tertiary action  */
+extern unsigned char keyflag4;   /* Quaternary action*/
 
 /* ================================================================
    Function prototypes

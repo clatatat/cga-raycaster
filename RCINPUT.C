@@ -146,5 +146,11 @@ int process_input(Player *p, Map *m)
             p->py = newY;
     }
 
+    /* Action key flags */
+    keyflag1 = key_state[controls.sc_primary];
+    keyflag2 = key_state[controls.sc_secondary];
+    keyflag3 = key_state[controls.sc_tertiary];
+    keyflag4 = key_state[controls.sc_quaternary];
+
     return 1;
 }

@@ -7,7 +7,14 @@
 
 /* Global settings and controls with defaults */
 Settings settings  = { 0, 0, 40, 0 };   /* LCD=OFF, 16x16=OFF, 40 cols, Infinite */
-Controls controls  = { SC_W, SC_S, SC_A, SC_D, SC_LEFT, SC_RIGHT };
+Controls controls  = { SC_W, SC_S, SC_A, SC_D, SC_LEFT, SC_RIGHT,
+                       SC_I, SC_O, SC_P, SC_SPACE };
+
+/* Key-action flags (updated each frame by process_input) */
+unsigned char keyflag1 = 0;
+unsigned char keyflag2 = 0;
+unsigned char keyflag3 = 0;
+unsigned char keyflag4 = 0;
 
 /* Ray hit buffer - sized for max columns */
 static RayHit hits[MAX_COLS];

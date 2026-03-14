@@ -17,11 +17,11 @@
 static const int menu_rows[MENU_ITEMS] = { 3, 5, 6, 7, 8, 9, 11 };
 
 /* Render distance cycling values */
-static const unsigned char rdist_vals[] = { 0, 8, 16, 24 };
+static const unsigned char rdist_vals[] = { 0, 8, 12, 16, 24 };
 static const char *rdist_names[] = {
-    "Infinite", "8 tiles ", "16 tiles", "24 tiles"
+    "Infinite", "8 tiles ", "12 tiles", "16 tiles", "24 tiles"
 };
-#define RDIST_COUNT 4
+#define RDIST_COUNT 5
 
 /* Attribute constants */
 #define AT_TITLE  0x0F   /* bright white */
@@ -31,7 +31,7 @@ static const char *rdist_names[] = {
 #define AT_CURSOR 0x0F   /* bright white */
 
 /* Number of control bindings */
-#define CTRL_ITEMS  6
+#define CTRL_ITEMS  10
 
 /*-----------------------------------------------------------------
   VRAM text helpers
@@ -209,7 +209,9 @@ static void show_controls(VIDMEM scr, int cols)
     static const char *action_names[CTRL_ITEMS] = {
         "Forward:",      "Backward:",
         "Turn Left:",    "Turn Right:",
-        "Strafe Left:",  "Strafe Right:"
+        "Strafe Left:",  "Strafe Right:",
+        "Primary:",      "Secondary:",
+        "Tertiary:",     "Quaternary:"
     };
     int sel = 0;
 
@@ -226,6 +228,10 @@ static void show_controls(VIDMEM scr, int cols)
         bindings[3] = &controls.sc_turn_right;
         bindings[4] = &controls.sc_strafe_left;
         bindings[5] = &controls.sc_strafe_right;
+        bindings[6] = &controls.sc_primary;
+        bindings[7] = &controls.sc_secondary;
+        bindings[8] = &controls.sc_tertiary;
+        bindings[9] = &controls.sc_quaternary;
 
         vcol = (cols == 80) ? 36 : 20;
         ccol = cols - 2;
@@ -241,7 +247,7 @@ static void show_controls(VIDMEM scr, int cols)
         }
 
         v_putch(scr, cols, 3 + sel, ccol, 0xDB, AT_CURSOR);
-        v_puts(scr, cols, 11, 2, "ENTER=rebind  ESC=back", AT_DIM);
+        v_puts(scr, cols, 14, 2, "ENTER=rebind  ESC=back", AT_DIM);
 
         key = menu_wait_key();
 
