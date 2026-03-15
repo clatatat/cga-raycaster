@@ -8,6 +8,20 @@ static unsigned char orig_mode;     /* saved video mode for restore */
 static int draw_page;               /* 0 or 1: which page we draw to */
 static VIDMEM pages[2];             /* far pointers to page 0 and 1 */
 
+/*-----------------------------------------------------------------
+  set_blink_mode - Enable (1) or disable (0) text attribute blinking.
+  When disabled, bit 7 of the attribute byte selects intense background
+  instead of blink, giving 16 background colors.
+-----------------------------------------------------------------*/
+static void set_blink_mode(int enable)
+{
+    union REGS r;
+    r.h.ah = 0x10;
+    r.h.al = 0x03;
+    r.h.bl = enable ? 1 : 0;
+    int86(VIDEO_INT, &r, &r);
+}
+
 /* Ceiling and floor VRAM words */
 #define CEIL_CELL   TC(' ', 0x00)           /* black space */
 #define FLOOR_CELL  TC(0xB0, 0x08)          /* dark floor pattern */
@@ -59,6 +73,8 @@ void set_columns(unsigned char cols)
     r.h.ah = BIOS_SETPAGE;
     r.h.al = 0;
     int86(VIDEO_INT, &r, &r);
+
+    set_blink_mode(0);
 }
 
 /*-----------------------------------------------------------------
@@ -82,6 +98,8 @@ void init_video(void)
 void restore_video(void)
 {
     union REGS r;
+
+    set_blink_mode(1);
 
     r.h.ah = BIOS_SETMODE;
     r.h.al = orig_mode;
