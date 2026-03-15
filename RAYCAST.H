@@ -153,7 +153,6 @@ extern const short cos_tab[256];
    ================================================================ */
 typedef struct {
     unsigned char lcd_palette;   /* 0=OFF, 1=ON */
-    unsigned char use_16x16;     /* 0=OFF, 1=ON (forced OFF if lcd_palette) */
     unsigned char columns;       /* 40 or 80 */
     unsigned char render_dist;   /* 0=Infinite, 8, 16, or 24 tiles */
     unsigned char far_shade;     /* 0=OFF, 1=ON: flat cell beyond 8 tiles */

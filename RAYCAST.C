@@ -6,7 +6,7 @@
 #include "raycast.h"
 
 /* Global settings and controls with defaults */
-Settings settings  = { 0, 0, 40, 0, 1, 0, 1 };   /* LCD=OFF, 16x16=OFF, 40 cols, Infinite, FarShade=ON, EnhPrec=OFF, FloorCeil=ON */
+Settings settings  = { 0, 40, 0, 1, 0, 1 };   /* LCD=OFF, 40 cols, Infinite, FarShade=ON, EnhPrec=OFF, FloorCeil=ON */
 Controls controls  = { SC_W, SC_S, SC_A, SC_D, SC_LEFT, SC_RIGHT,
                        SC_I, SC_O, SC_P, SC_SPACE };
 

@@ -7,18 +7,17 @@
 /* Menu item indices */
 #define MI_RESUME    0
 #define MI_LCD       1
-#define MI_16X16     2
-#define MI_COLUMNS   3
-#define MI_RDIST     4
-#define MI_FARSHADE  5
-#define MI_ENHPREC   6
-#define MI_FLRCEIL   7
-#define MI_CONTROLS  8
-#define MI_QUIT      9
-#define MENU_ITEMS   10
+#define MI_COLUMNS   2
+#define MI_RDIST     3
+#define MI_FARSHADE  4
+#define MI_ENHPREC   5
+#define MI_FLRCEIL   6
+#define MI_CONTROLS  7
+#define MI_QUIT      8
+#define MENU_ITEMS   9
 
 /* Row on screen for each menu item */
-static const int menu_rows[MENU_ITEMS] = { 3, 5, 6, 7, 8, 9, 10, 11, 12, 14 };
+static const int menu_rows[MENU_ITEMS] = { 3, 5, 6, 7, 8, 9, 10, 11, 13 };
 
 /* Render distance cycling values */
 static const unsigned char rdist_vals[] = { 0, 8, 12, 16, 24 };
@@ -177,44 +176,35 @@ static void draw_menu(VIDMEM scr, int cols, int sel)
     val = settings.lcd_palette ? "ON " : "OFF";
     v_puts(scr, cols, 5, vcol, val, AT_VALUE);
 
-    /* 16x16 Textures */
-    v_puts(scr, cols, 6, 2, "16x16 Textures:", AT_LABEL);
-    if (settings.lcd_palette)
-        v_puts(scr, cols, 6, vcol, "N/A", AT_DIM);
-    else {
-        val = settings.use_16x16 ? "ON " : "OFF";
-        v_puts(scr, cols, 6, vcol, val, AT_VALUE);
-    }
-
     /* Columns */
-    v_puts(scr, cols, 7, 2, "Columns:", AT_LABEL);
+    v_puts(scr, cols, 6, 2, "Columns:", AT_LABEL);
     val = (settings.columns == 80) ? "80" : "40";
-    v_puts(scr, cols, 7, vcol, val, AT_VALUE);
+    v_puts(scr, cols, 6, vcol, val, AT_VALUE);
 
     /* Render Distance */
-    v_puts(scr, cols, 8, 2, "Render Distance:", AT_LABEL);
-    v_puts(scr, cols, 8, vcol, rdist_names[get_rdist_idx()], AT_VALUE);
+    v_puts(scr, cols, 7, 2, "Render Distance:", AT_LABEL);
+    v_puts(scr, cols, 7, vcol, rdist_names[get_rdist_idx()], AT_VALUE);
 
     /* Far Shade */
-    v_puts(scr, cols, 9, 2, "Far Shade:", AT_LABEL);
+    v_puts(scr, cols, 8, 2, "Far Shade:", AT_LABEL);
     val = settings.far_shade ? "ON " : "OFF";
-    v_puts(scr, cols, 9, vcol, val, AT_VALUE);
+    v_puts(scr, cols, 8, vcol, val, AT_VALUE);
 
     /* Enhanced Precision */
-    v_puts(scr, cols, 10, 2, "Enhanced Precision:", AT_LABEL);
+    v_puts(scr, cols, 9, 2, "Enhanced Precision:", AT_LABEL);
     val = settings.enhanced_prec ? "ON " : "OFF";
-    v_puts(scr, cols, 10, vcol, val, AT_VALUE);
+    v_puts(scr, cols, 9, vcol, val, AT_VALUE);
 
     /* Floor/Ceiling */
-    v_puts(scr, cols, 11, 2, "Floor/Ceiling:", AT_LABEL);
+    v_puts(scr, cols, 10, 2, "Floor/Ceiling:", AT_LABEL);
     val = settings.draw_floorceil ? "ON " : "OFF";
-    v_puts(scr, cols, 11, vcol, val, AT_VALUE);
+    v_puts(scr, cols, 10, vcol, val, AT_VALUE);
 
     /* Controls */
-    v_puts(scr, cols, 12, 2, "Controls...", AT_LABEL);
+    v_puts(scr, cols, 11, 2, "Controls...", AT_LABEL);
 
     /* Quit */
-    v_puts(scr, cols, 14, 2, "Quit Game", AT_LABEL);
+    v_puts(scr, cols, 13, 2, "Quit Game", AT_LABEL);
 
     /* Cursor block on selected row */
     v_putch(scr, cols, menu_rows[sel], ccol, 0xDB, AT_CURSOR);
@@ -291,7 +281,6 @@ void save_options(void)
     FILE *f = fopen("OPTIONS.TXT", "w");
     if (!f) return;
     fprintf(f, "%d\n", (int)settings.lcd_palette);
-    fprintf(f, "%d\n", (int)settings.use_16x16);
     fprintf(f, "%d\n", (int)settings.columns);
     fprintf(f, "%d\n", (int)settings.render_dist);
     fprintf(f, "%d\n", (int)settings.far_shade);
@@ -321,7 +310,6 @@ void load_options(void)
     if (!f) return;
 
     if (fscanf(f, "%d", &v) == 1) settings.lcd_palette     = (unsigned char)v;
-    if (fscanf(f, "%d", &v) == 1) settings.use_16x16       = (unsigned char)v;
     if (fscanf(f, "%d", &v) == 1) settings.columns         = (unsigned char)v;
     if (fscanf(f, "%d", &v) == 1) settings.render_dist     = (unsigned char)v;
     if (fscanf(f, "%d", &v) == 1) settings.far_shade       = (unsigned char)v;
@@ -343,7 +331,6 @@ void load_options(void)
     /* Sanitize loaded values */
     if (settings.columns != 40 && settings.columns != 80)
         settings.columns = 40;
-    if (settings.lcd_palette) settings.use_16x16 = 0;
 }
 
 /*-----------------------------------------------------------------
@@ -384,12 +371,6 @@ int show_menu(void)
                 return 1;
             case MI_LCD:
                 settings.lcd_palette ^= 1;
-                if (settings.lcd_palette)
-                    settings.use_16x16 = 0;
-                break;
-            case MI_16X16:
-                if (!settings.lcd_palette)
-                    settings.use_16x16 ^= 1;
                 break;
             case MI_COLUMNS:
                 settings.columns = (settings.columns == 40) ? 80 : 40;
