@@ -159,6 +159,7 @@ typedef struct {
 #define SC_P         0x19
 #define SC_Z         0x2C
 #define SC_BACKSLASH 0x2B
+#define SC_J         0x24
 #define SC_SPACE     0x39
 
 /* ================================================================
@@ -189,6 +190,26 @@ extern unsigned char  dbg_place_tile;  /* tile to place with P key   */
 
 /* 80-column performance boost - activated by ENG-80COLPERF=1 */
 extern unsigned char eng_80colperf;
+
+/* ================================================================
+   Entity system
+   ================================================================ */
+#define ENT_MOVE_SPEED  18   /* 75% of MOVE_SPEED (24)  */
+#define ENT_TURN_SPEED  3    /* same as player          */
+#define ENT_ANIM_RATE   8    /* frames between walk frame swap */
+#define ENT_IDLE        0
+#define ENT_WALK        1
+
+typedef struct {
+    fix8 x, y;              /* position (8.8 fixed-point)   */
+    unsigned char angle;    /* facing direction (0-255)     */
+    unsigned char active;   /* 0 = not spawned, 1 = active  */
+    unsigned char state;    /* ENT_IDLE or ENT_WALK         */
+    unsigned char frame;    /* current animation frame      */
+    unsigned char timer;    /* countdown to next frame swap  */
+} Entity;
+
+extern Entity test_entity;
 
 /* ================================================================
    Controls - rebindable key scan codes
@@ -257,5 +278,13 @@ int  show_tile_menu(void);
 void show_minimap(Player *p, Map *m);
 void save_options(void);
 void load_options(void);
+
+/* RCENT.C - entity system */
+extern unsigned short far *ent_frames[];
+void spawn_entity(Entity *e, Player *p);
+void update_entity(Entity *e, Player *p, Map *m);
+
+/* RCDRAW.C - entity rendering */
+void render_entity(Entity *e, Player *p, RayHit hits[]);
 
 #endif /* RAYCAST_H */

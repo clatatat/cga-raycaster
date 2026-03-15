@@ -443,3 +443,94 @@ void render_sprites(Player *p, Map *m, RayHit hits[])
         }
     }
 }
+
+/*-----------------------------------------------------------------
+  render_entity - Draw a single entity as a billboard sprite.
+  Uses per-column Z-testing against wall distances for occlusion.
+  Selects animation frame from entity state.
+-----------------------------------------------------------------*/
+void render_entity(Entity *e, Player *p, RayHit hits[])
+{
+    int cols = settings.columns;
+    VIDMEM scr = pages[draw_page];
+    unsigned short far *tex;
+    short dirX, dirY, planeX, planeY;
+    short sx, sy, temp1, temp2, depth, scrX;
+    int sprSize;
+    short texStepY;
+    int dStartX, dEndX, dStartY, dEndY;
+    int startX, endX, x, y;
+
+    if (!e->active) return;
+
+    /* Select animation frame */
+    if (e->state == ENT_WALK)
+        tex = ent_frames[1 + e->frame];
+    else
+        tex = ent_frames[0];
+
+    /* Camera transform */
+    dirX = cos_tab[p->angle];
+    dirY = sin_tab[p->angle];
+    planeX = -fix_mul(dirY, FOV_PLANE);
+    planeY =  fix_mul(dirX, FOV_PLANE);
+
+    /* Vector from player to entity */
+    sx = (short)(e->x - p->px);
+    sy = (short)(e->y - p->py);
+
+    /* Depth in camera space */
+    temp1 = (short)(fix_mul(planeY, sx) - fix_mul(planeX, sy));
+    depth = safe_div(temp1, FOV_PLANE);
+
+    if (depth <= 0) return;
+
+    /* Lateral position on screen */
+    temp2 = (short)(-fix_mul(dirY, sx) + fix_mul(dirX, sy));
+    scrX = (short)(cols / 2 +
+        (int)(((long)safe_div(temp2, temp1) * (cols / 2)) >> 8));
+
+    /* Sprite size from distance */
+    sprSize = safe_div(WALL_CONST, depth) >> 8;
+    if (sprSize < 1) sprSize = 1;
+    if (sprSize > SCREEN_H * 2) sprSize = SCREEN_H * 2;
+
+    texStepY = (short)((TEX_SIZE << 8) / sprSize);
+
+    dStartX = scrX - sprSize / 2;
+    dEndX = dStartX + sprSize;
+    dStartY = (SCREEN_H - sprSize) / 2;
+    dEndY = dStartY + sprSize;
+
+    startX = dStartX < 0 ? 0 : dStartX;
+    endX = dEndX > cols ? cols : dEndX;
+
+    for (x = startX; x < endX; x++) {
+        int texX;
+        short texPosY;
+        int startY, endY;
+
+        /* Z-test: skip column if wall is closer */
+        if (hits[x].dist != 0 && depth >= hits[x].dist)
+            continue;
+
+        texX = ((x - dStartX) * TEX_SIZE) / sprSize;
+        if (texX >= TEX_SIZE) texX = TEX_SIZE - 1;
+
+        texPosY = 0;
+        startY = dStartY;
+        if (startY < 0) {
+            texPosY = (short)((-startY) * texStepY);
+            startY = 0;
+        }
+        endY = dEndY > SCREEN_H ? SCREEN_H : dEndY;
+
+        for (y = startY; y < endY; y++) {
+            int texY = (texPosY >> 8) & TEX_MASK;
+            unsigned short texel = tex[texY * TEX_SIZE + texX];
+            if (texel != 0)
+                *(scr + y * cols + x) = texel;
+            texPosY += texStepY;
+        }
+    }
+}

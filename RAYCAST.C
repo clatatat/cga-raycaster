@@ -127,9 +127,18 @@ int main(void)
             continue;
         }
 
+        /* J = spawn test entity (debug) */
+        if (eng_debug && key_state[SC_J]) {
+            spawn_entity(&test_entity, &player);
+            while (key_state[SC_J]) ;
+        }
+
+        update_entity(&test_entity, &player, &level);
+
         cast_rays(&player, &level, hits);
         render_frame(hits);
         render_sprites(&player, &level, hits);
+        render_entity(&test_entity, &player, hits);
         flip_page();
     }
 

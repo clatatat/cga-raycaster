@@ -14,8 +14,18 @@ echo ---- Assembling RCFIXED.ASM ----
 MASM /Mx RCFIXED.ASM;
 if errorlevel 1 goto fail
 
-echo ---- Compiling and linking ----
-QCL /AS /Ze /Ox /FeRAYCAST.EXE RAYCAST.C RCMATH.C RCCAST.C RCDRAW.C RCTEX.C RCLCD.C RCINPUT.C RCMAP.C RCMENU.C RCFIXED.OBJ
+echo ---- Compiling C sources ----
+QCL /AS /Ze /Ox /c RAYCAST.C RCMATH.C RCCAST.C RCDRAW.C RCTEX.C
+if errorlevel 1 goto fail
+QCL /AS /Ze /Ox /c RCLCD.C RCINPUT.C RCMAP.C RCMENU.C RCENT.C
+if errorlevel 1 goto fail
+
+echo ---- Linking ----
+echo RAYCAST.OBJ RCMATH.OBJ RCCAST.OBJ RCDRAW.OBJ+ > LINK.RSP
+echo RCTEX.OBJ RCLCD.OBJ RCINPUT.OBJ RCMAP.OBJ+ >> LINK.RSP
+echo RCMENU.OBJ RCENT.OBJ RCFIXED.OBJ >> LINK.RSP
+echo RAYCAST.EXE; >> LINK.RSP
+LINK @LINK.RSP
 if errorlevel 1 goto fail
 
 echo.
