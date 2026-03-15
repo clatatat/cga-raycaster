@@ -1,5 +1,4 @@
-- do some texture stuff and fix some issues with texture rendering
-- make different tiles use different single characters and colors when drawing from far away, instead of their texture, to distinguish on mono screen and help on color
+
 - mess around with sprite rendering, maybe via tree block or a potted plant or something
 - glass/ transparent tiles
 - make tile types super easily configurable, make a good texture editor that isnt just raw hex arrays (preferably also a DOS program, maybe just something I could rig up in QuickBASIC)

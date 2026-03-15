@@ -11,6 +11,8 @@ static VIDMEM pages[2];             /* far pointers to page 0 and 1 */
 /* Ceiling and floor VRAM words */
 #define CEIL_CELL   TC(' ', 0x00)           /* black space */
 #define FLOOR_CELL  TC(0xB0, 0x08)          /* dark floor pattern */
+#define BLANK_CELL  TC(' ', 0x00)            /* empty cell */
+#define WALL_CONST_2X (WALL_CONST * 2)      /* double-height for half-block precision */
 
 #define FIX_ABS(x)  ((x) < 0 ? -(x) : (x))
 
@@ -124,6 +126,14 @@ void render_frame(RayHit hits[])
 
     active_tex = settings.lcd_palette ? lcd_tex_table : tex_table;
     scr = pages[draw_page];
+    {
+        unsigned short *active_far;
+        unsigned char *active_half;
+        unsigned short ceil_cell, floor_cell;
+        active_far = settings.lcd_palette ? lcd_far_table : far_table;
+        active_half = settings.lcd_palette ? lcd_half_table : half_table;
+        ceil_cell  = CEIL_CELL;
+        floor_cell = settings.draw_floorceil ? FLOOR_CELL : BLANK_CELL;
 
     for (x = 0; x < cols; x++)
     {
@@ -137,9 +147,9 @@ void render_frame(RayHit hits[])
         if (hits[x].dist == 0) {
             int mid = SCREEN_H / 2;
             for (y = 0; y < mid; y++)
-                *(scr + y * cols + x) = CEIL_CELL;
+                *(scr + y * cols + x) = ceil_cell;
             for (y = mid; y < SCREEN_H; y++)
-                *(scr + y * cols + x) = FLOOR_CELL;
+                *(scr + y * cols + x) = floor_cell;
             continue;
         }
 
@@ -155,6 +165,70 @@ void render_frame(RayHit hits[])
         /* Vertical centering */
         drawStart = (SCREEN_H - wallHeight) >> 1;
         drawEnd = drawStart + wallHeight;
+
+        /* Far distance: render as a single flat cell, skip texture */
+        if (hits[x].dist > INT2FIX(8) && settings.far_shade) {
+            unsigned short far_cell = active_far[hits[x].tile];
+            for (y = 0; y < drawStart; y++)
+                *(scr + y * cols + x) = ceil_cell;
+            for (y = drawStart; y < drawEnd; y++)
+                *(scr + y * cols + x) = far_cell;
+            for (y = drawEnd; y < SCREEN_H; y++)
+                *(scr + y * cols + x) = floor_cell;
+            continue;
+        }
+
+        /* Enhanced precision: half-block characters at wall edges */
+        if (settings.enhanced_prec) {
+            int wallHalf, halfSU, halfS, halfE;
+            int fS, fE, hoff;
+            short tSH, tSF, tPos;
+            unsigned char hAttr;
+
+            hAttr = active_half[hits[x].tile];
+            wallHalf = safe_div(WALL_CONST_2X, hits[x].dist) >> 8;
+            if (wallHalf < 1) wallHalf = 1;
+
+            halfSU = (SCREEN_H * 2 - wallHalf) / 2;
+            halfS = halfSU < 0 ? 0 : halfSU;
+            halfE = halfSU + wallHalf;
+            if (halfE > SCREEN_H * 2) halfE = SCREEN_H * 2;
+
+            fS = (halfS + 1) / 2;
+            fE = halfE / 2;
+
+            /* Ceiling */
+            for (y = 0; y < halfS / 2; y++)
+                *(scr + y * cols + x) = ceil_cell;
+
+            /* Top edge: bottom-half block */
+            if (halfS & 1)
+                *(scr + (halfS / 2) * cols + x) = TC(0xDC, hAttr);
+
+            /* Full-wall rows with texture */
+            tex = active_tex[hits[x].tile];
+            texX = hits[x].texX;
+            tSH = (short)((TEX_SIZE << 8) / wallHalf);
+            tSF = tSH * 2;
+            hoff = fS * 2 - halfSU;
+            tPos = (short)(hoff * tSH);
+
+            for (y = fS; y < fE; y++) {
+                int texY = (tPos >> 8) & TEX_MASK;
+                *(scr + y * cols + x) = tex[texY * TEX_SIZE + texX];
+                tPos += tSF;
+            }
+
+            /* Bottom edge: top-half block */
+            if (halfE & 1)
+                *(scr + (halfE / 2) * cols + x) = TC(0xDF, hAttr);
+
+            /* Floor */
+            for (y = (halfE + 1) / 2; y < SCREEN_H; y++)
+                *(scr + y * cols + x) = floor_cell;
+
+            continue;
+        }
 
         /* Get texture pointer for this tile */
         tex = active_tex[hits[x].tile];
@@ -174,7 +248,7 @@ void render_frame(RayHit hits[])
 
         /* Ceiling */
         for (y = 0; y < drawStart; y++)
-            *(scr + y * cols + x) = CEIL_CELL;
+            *(scr + y * cols + x) = ceil_cell;
 
         /* Wall */
         for (y = drawStart; y < drawEnd; y++)
@@ -191,6 +265,7 @@ void render_frame(RayHit hits[])
 
         /* Floor */
         for (y = drawEnd; y < SCREEN_H; y++)
-            *(scr + y * cols + x) = FLOOR_CELL;
+            *(scr + y * cols + x) = floor_cell;
+    }
     }
 }

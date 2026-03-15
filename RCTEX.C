@@ -26,7 +26,10 @@
    Irregular organic pattern using shade characters.
    Monochrome: clearly different densities create a rough look.
    Color: white/gray foreground on black → grey stone appearance.
+   Far cell (> 8 tiles): medium shade, dark gray
    ================================================================ */
+#define FAR_STONE   TC(0xDB, 0x08)
+#define HALF_STONE  0x08   /* dark gray: half-block attribute */
 static const unsigned short tex_stone[TEX_SIZE][TEX_SIZE] = {
     { TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x08),
       TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x07) },
@@ -51,7 +54,10 @@ static const unsigned short tex_stone[TEX_SIZE][TEX_SIZE] = {
    Horizontal courses with offset mortar joints.
    Monochrome: strong horizontal lines + offset breaks = obvious.
    Color: red(0x04) blocks with dark yellow(0x06) mortar lines.
+   Far cell (> 8 tiles): solid block, dark red
    ================================================================ */
+#define FAR_BRICK   TC(0xB2, 0x04)
+#define HALF_BRICK  0x07
 static const unsigned short tex_brick[TEX_SIZE][TEX_SIZE] = {
     /* Row 0: mortar line */
     { TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x0F), TC(0xDB,0x0F),
@@ -82,7 +88,10 @@ static const unsigned short tex_brick[TEX_SIZE][TEX_SIZE] = {
    Vertical grain using line-drawing characters.
    Monochrome: strong vertical striping stands out clearly.
    Color: brown (0x06) foreground on black, brown on yellow (0xE6)
+   Far cell (> 8 tiles): solid block, brown
    ================================================================ */
+#define FAR_WOOD    TC(0xCD, 0x06)
+#define HALF_WOOD   0x06   /* brown: half-block attribute */
 static const unsigned short tex_wood[TEX_SIZE][TEX_SIZE] = {
     { TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xB1,0x6E), TC(0xB1,0x6E) },
     { TC(0xB1,0x6E), TC(0xB1,0x6E), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xDB,0x06) },
@@ -96,10 +105,12 @@ static const unsigned short tex_wood[TEX_SIZE][TEX_SIZE] = {
 
 /* ================================================================
    LOG TEXTURE
-   Concentric ring/circle pattern suggesting a log cross-section.
    Monochrome: clear circular structure unlike any other texture.
    Color: brown. Vertical log appearance.
+   Far cell (> 8 tiles): medium shade, brown
    ================================================================ */
+#define FAR_LOG     TC(0xBA, 0x06)
+#define HALF_LOG    0x06   /* brown: half-block attribute */
 static const unsigned short tex_log[TEX_SIZE][TEX_SIZE] = {
     { TC(0xB0,0x06), TC(0xDB,0x06), TC(0xB1,0x06), TC(0xDB,0x06), TC(0xDB,0x06), TC(0xB1,0x06), TC(0xB1,0x06), TC(0xB0,0x06) },
     { TC(0xB0,0x06), TC(0xB1,0x06), TC(0xB0,0x06), TC(0xB1,0x06), TC(0xB1,0x06), TC(0xB0,0x06), TC(0xDB,0x06), TC(0xB0,0x06) },
@@ -121,4 +132,22 @@ unsigned short far *tex_table[NUM_TILES] = {
     (unsigned short far *)tex_brick,    /* 2: TILE_BRICK */
     (unsigned short far *)tex_wood,     /* 3: TILE_WOOD  */
     (unsigned short far *)tex_log       /* 4: TILE_LOG   */
+};
+
+/* Single-cell fallback used when tile is more than 8 tiles away */
+unsigned short far_table[NUM_TILES] = {
+    FAR_STONE,   /* 0: TILE_EMPTY (fallback) */
+    FAR_STONE,   /* 1: TILE_STONE */
+    FAR_BRICK,   /* 2: TILE_BRICK */
+    FAR_WOOD,    /* 3: TILE_WOOD  */
+    FAR_LOG      /* 4: TILE_LOG   */
+};
+
+/* Half-block edge attribute per tile (foreground color on black bg) */
+unsigned char half_table[NUM_TILES] = {
+    HALF_STONE,  /* 0: TILE_EMPTY (fallback) */
+    HALF_STONE,  /* 1: TILE_STONE */
+    HALF_BRICK,  /* 2: TILE_BRICK */
+    HALF_WOOD,   /* 3: TILE_WOOD  */
+    HALF_LOG     /* 4: TILE_LOG   */
 };

@@ -156,6 +156,9 @@ typedef struct {
     unsigned char use_16x16;     /* 0=OFF, 1=ON (forced OFF if lcd_palette) */
     unsigned char columns;       /* 40 or 80 */
     unsigned char render_dist;   /* 0=Infinite, 8, 16, or 24 tiles */
+    unsigned char far_shade;     /* 0=OFF, 1=ON: flat cell beyond 8 tiles */
+    unsigned char enhanced_prec; /* 0=OFF, 1=ON: half-block edge precision */
+    unsigned char draw_floorceil;/* 0=OFF, 1=ON: render floor/ceiling chars */
 } Settings;
 
 extern Settings settings;
@@ -200,9 +203,13 @@ void flip_page(void);
 
 /* RCTEX.C - texture data */
 extern unsigned short far *tex_table[];
+extern unsigned short far_table[];
+extern unsigned char half_table[];     /* attribute for half-block edges */
 
 /* RCLCD.C - LCD-optimised texture data */
 extern unsigned short far *lcd_tex_table[];
+extern unsigned short lcd_far_table[];
+extern unsigned char lcd_half_table[]; /* attribute for half-block edges */
 
 /* RCINPUT.C - keyboard ISR and input processing */
 void install_keyboard(void);
@@ -216,5 +223,7 @@ unsigned char map_get(Map *m, int x, int y);
 
 /* RCMENU.C - options menu */
 int show_menu(void);
+void save_options(void);
+void load_options(void);
 
 #endif /* RAYCAST_H */
