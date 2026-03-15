@@ -71,6 +71,7 @@ int main(void)
 
         cast_rays(&player, &level, hits);
         render_frame(hits);
+        render_sprites(&player, &level, hits);
         flip_page();
     }
 

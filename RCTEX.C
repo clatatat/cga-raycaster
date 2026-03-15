@@ -123,6 +123,25 @@ static const unsigned short tex_log[TEX_SIZE][TEX_SIZE] = {
 };
 
 /* ================================================================
+   TREE TEXTURE (billboard sprite)
+   Leafy canopy above a brown trunk. Left-right symmetric.
+   Uses 0x0000 for transparent cells (background shows through).
+   Color: dark green (0x02) / light green (0x0A) canopy, brown (0x06) trunk.
+   ================================================================ */
+#define FAR_TREE    TC(0x06, 0x02)   /* unused - sprites have own renderer */
+#define HALF_TREE   0x02             /* unused - sprites skip enhanced prec */
+static const unsigned short tex_tree[TEX_SIZE][TEX_SIZE] = {
+    { 0, 0, TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x02), 0, 0 },
+    { 0, TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02), 0 },
+    { TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02) },
+    { TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x02) },
+    { 0, TC(0xDB,0x02), TC(0xDB,0x02), TC(0xDB,0x0A), TC(0xDB,0x0A), TC(0xDB,0x02), TC(0xDB,0x02), 0 },
+    { 0, 0, 0, TC(0xDB,0x06), TC(0xDB,0x06), 0, 0, 0 },
+    { 0, 0, 0, TC(0xDB,0x06), TC(0xDB,0x06), 0, 0, 0 },
+    { 0, 0, 0, TC(0xDB,0x06), TC(0xDB,0x06), 0, 0, 0 }
+};
+
+/* ================================================================
    Texture lookup table - indexed by tile type.
    Entry 0 (TILE_EMPTY) points to stone as a fallback.
    ================================================================ */
@@ -131,7 +150,8 @@ unsigned short far *tex_table[NUM_TILES] = {
     (unsigned short far *)tex_stone,    /* 1: TILE_STONE */
     (unsigned short far *)tex_brick,    /* 2: TILE_BRICK */
     (unsigned short far *)tex_wood,     /* 3: TILE_WOOD  */
-    (unsigned short far *)tex_log       /* 4: TILE_LOG   */
+    (unsigned short far *)tex_log,      /* 4: TILE_LOG   */
+    (unsigned short far *)tex_tree      /* 5: TILE_TREE  */
 };
 
 /* Single-cell fallback used when tile is more than 8 tiles away */
@@ -140,7 +160,8 @@ unsigned short far_table[NUM_TILES] = {
     FAR_STONE,   /* 1: TILE_STONE */
     FAR_BRICK,   /* 2: TILE_BRICK */
     FAR_WOOD,    /* 3: TILE_WOOD  */
-    FAR_LOG      /* 4: TILE_LOG   */
+    FAR_LOG,     /* 4: TILE_LOG   */
+    FAR_TREE     /* 5: TILE_TREE (unused) */
 };
 
 /* Half-block edge attribute per tile (foreground color on black bg) */
@@ -149,5 +170,6 @@ unsigned char half_table[NUM_TILES] = {
     HALF_STONE,  /* 1: TILE_STONE */
     HALF_BRICK,  /* 2: TILE_BRICK */
     HALF_WOOD,   /* 3: TILE_WOOD  */
-    HALF_LOG     /* 4: TILE_LOG   */
+    HALF_LOG,    /* 4: TILE_LOG   */
+    HALF_TREE    /* 5: TILE_TREE (unused) */
 };

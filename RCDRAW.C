@@ -269,3 +269,150 @@ void render_frame(RayHit hits[])
     }
     }
 }
+
+/*-----------------------------------------------------------------
+  render_sprites - Draw billboard sprite tiles on top of the
+  already-rendered wall frame. Uses painter's algorithm
+  (back to front) with per-column z-testing against wall distances.
+
+  Sprites always face the player and use the same 8x8 texture
+  format as walls. Texels with value 0 are transparent.
+  Does not render sprites more than 8 tiles away.
+  Unaffected by enhanced precision setting.
+-----------------------------------------------------------------*/
+void render_sprites(Player *p, Map *m, RayHit hits[])
+{
+    struct vis_sprite {
+        short depth;
+        short screenX;
+        short size;
+        unsigned char tile;
+    } sprites[MAX_SPRITES];
+    int count = 0;
+    int cols = settings.columns;
+    VIDMEM scr = pages[draw_page];
+    unsigned short far **active_tex;
+    short dirX, dirY, planeX, planeY;
+    int px, py, minX, maxX, minY, maxY;
+    int mx, my, i, j;
+
+    active_tex = settings.lcd_palette ? lcd_tex_table : tex_table;
+
+    dirX = cos_tab[p->angle];
+    dirY = sin_tab[p->angle];
+    planeX = -fix_mul(dirY, FOV_PLANE);
+    planeY =  fix_mul(dirX, FOV_PLANE);
+
+    /* Player tile position */
+    px = FIX2INT(p->px);
+    py = FIX2INT(p->py);
+
+    /* Scan +/-8 tiles around player for sprite tiles */
+    minX = px - 8; if (minX < 0) minX = 0;
+    maxX = px + 8; if (maxX >= (int)m->w) maxX = (int)m->w - 1;
+    minY = py - 8; if (minY < 0) minY = 0;
+    maxY = py + 8; if (maxY >= (int)m->h) maxY = (int)m->h - 1;
+
+    for (my = minY; my <= maxY && count < MAX_SPRITES; my++) {
+        for (mx = minX; mx <= maxX && count < MAX_SPRITES; mx++) {
+            unsigned char tile = m->data[(unsigned)my * m->w + (unsigned)mx];
+            if (TILE_IS_SPRITE(tile)) {
+                short sx, sy, temp1, temp2, depth, scrX;
+                int sprSize;
+
+                /* Vector from player to sprite center */
+                sx = (short)(INT2FIX(mx) + FIX_HALF - p->px);
+                sy = (short)(INT2FIX(my) + FIX_HALF - p->py);
+
+                /* Camera-space depth via inverse camera matrix.
+                   det = dirX*planeY - planeX*dirY = FOV_PLANE (constant).
+                   depth = (planeY*sx - planeX*sy) / FOV_PLANE */
+                temp1 = (short)(fix_mul(planeY, sx) - fix_mul(planeX, sy));
+                depth = safe_div(temp1, FOV_PLANE);
+
+                if (depth <= 0 || depth > SPRITE_MAX_DIST)
+                    continue;
+
+                /* Lateral component (det cancels):
+                   camX = (-dirY*sx + dirX*sy) / (planeY*sx - planeX*sy)
+                   screenX = cols/2 + camX * (cols/2) */
+                temp2 = (short)(-fix_mul(dirY, sx) + fix_mul(dirX, sy));
+                scrX = (short)(cols / 2 +
+                    (int)(((long)safe_div(temp2, temp1) * (cols / 2)) >> 8));
+
+                /* Sprite size = same formula as wall height */
+                sprSize = safe_div(WALL_CONST, depth) >> 8;
+                if (sprSize < 1) sprSize = 1;
+                if (sprSize > SCREEN_H * 2) sprSize = SCREEN_H * 2;
+
+                sprites[count].depth = depth;
+                sprites[count].screenX = scrX;
+                sprites[count].size = (short)sprSize;
+                sprites[count].tile = tile;
+                count++;
+            }
+        }
+    }
+
+    if (count == 0) return;
+
+    /* Insertion sort by depth descending (back to front) */
+    for (i = 1; i < count; i++) {
+        struct vis_sprite tmp = sprites[i];
+        j = i - 1;
+        while (j >= 0 && sprites[j].depth < tmp.depth) {
+            sprites[j + 1] = sprites[j];
+            j--;
+        }
+        sprites[j + 1] = tmp;
+    }
+
+    /* Render each sprite */
+    for (i = 0; i < count; i++) {
+        int sprH = sprites[i].size;
+        int sprW = sprH;    /* square sprites */
+        int scx = sprites[i].screenX;
+        int dStartX = scx - sprW / 2;
+        int dEndX = dStartX + sprW;
+        int dStartY = (SCREEN_H - sprH) / 2;
+        int dEndY = dStartY + sprH;
+        unsigned short far *tex = active_tex[sprites[i].tile];
+        short texStepY;
+        int startX, endX, x, y;
+
+        if (sprH < 1) continue;
+        texStepY = (short)((TEX_SIZE << 8) / sprH);
+
+        startX = dStartX < 0 ? 0 : dStartX;
+        endX = dEndX > cols ? cols : dEndX;
+
+        for (x = startX; x < endX; x++) {
+            int texX;
+            short texPosY;
+            int startY, endY;
+
+            /* Z-test: skip column if wall is closer */
+            if (hits[x].dist != 0 && sprites[i].depth >= hits[x].dist)
+                continue;
+
+            texX = ((x - dStartX) * TEX_SIZE) / sprW;
+            if (texX >= TEX_SIZE) texX = TEX_SIZE - 1;
+
+            texPosY = 0;
+            startY = dStartY;
+            if (startY < 0) {
+                texPosY = (short)((-startY) * texStepY);
+                startY = 0;
+            }
+            endY = dEndY > SCREEN_H ? SCREEN_H : dEndY;
+
+            for (y = startY; y < endY; y++) {
+                int texY = (texPosY >> 8) & TEX_MASK;
+                unsigned short texel = tex[texY * TEX_SIZE + texX];
+                if (texel != 0)     /* 0 = transparent */
+                    *(scr + y * cols + x) = texel;
+                texPosY += texStepY;
+            }
+        }
+    }
+}

@@ -140,6 +140,10 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
             }
 
             tile = m->data[(unsigned)mapY * m->w + (unsigned)mapX];
+
+            /* Rays pass through sprite tiles (rendered separately) */
+            if (TILE_IS_SPRITE(tile))
+                tile = TILE_EMPTY;
         }
 
         /* No wall hit within render distance */

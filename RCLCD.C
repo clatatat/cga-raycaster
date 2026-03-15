@@ -121,6 +121,26 @@ static const unsigned short lcd_tex_log[TEX_SIZE][TEX_SIZE] = {
 };
 
 /* ================================================================
+   TREE TEXTURE (billboard sprite)
+   Leafy canopy above a trunk. Left-right symmetric.
+   Uses 0x0000 for transparent cells (background shows through).
+   LCD: dark gray (0x07) canopy, light gray (0x08) canopy highlights,
+        black (0x0F) trunk.
+   ================================================================ */
+#define LCD_FAR_TREE    TC(0x06, 0x07)   /* unused - sprites have own renderer */
+#define LCD_HALF_TREE   0x07             /* unused - sprites skip enhanced prec */
+static const unsigned short lcd_tex_tree[TEX_SIZE][TEX_SIZE] = {
+    { 0, 0, TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x07), 0, 0 },
+    { 0, TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), 0 },
+    { TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07) },
+    { TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x07) },
+    { 0, TC(0xDB,0x07), TC(0xDB,0x07), TC(0xDB,0x08), TC(0xDB,0x08), TC(0xDB,0x07), TC(0xDB,0x07), 0 },
+    { 0, 0, 0, TC(0xDB,0x0F), TC(0xDB,0x0F), 0, 0, 0 },
+    { 0, 0, 0, TC(0xDB,0x0F), TC(0xDB,0x0F), 0, 0, 0 },
+    { 0, 0, 0, TC(0xDB,0x0F), TC(0xDB,0x0F), 0, 0, 0 }
+};
+
+/* ================================================================
    Texture lookup table - indexed by tile type.
    Entry 0 (TILE_EMPTY) points to stone as a fallback.
    ================================================================ */
@@ -130,7 +150,8 @@ unsigned short lcd_far_table[NUM_TILES] = {
     LCD_FAR_STONE,   /* 1: TILE_STONE */
     LCD_FAR_BRICK,   /* 2: TILE_BRICK */
     LCD_FAR_WOOD,    /* 3: TILE_WOOD  */
-    LCD_FAR_LOG      /* 4: TILE_LOG   */
+    LCD_FAR_LOG,     /* 4: TILE_LOG   */
+    LCD_FAR_TREE     /* 5: TILE_TREE (unused) */
 };
 
 /* Half-block edge attribute per tile (foreground color on black bg) */
@@ -139,7 +160,8 @@ unsigned char lcd_half_table[NUM_TILES] = {
     LCD_HALF_STONE,  /* 1: TILE_STONE */
     LCD_HALF_BRICK,  /* 2: TILE_BRICK */
     LCD_HALF_WOOD,   /* 3: TILE_WOOD  */
-    LCD_HALF_LOG     /* 4: TILE_LOG   */
+    LCD_HALF_LOG,    /* 4: TILE_LOG   */
+    LCD_HALF_TREE    /* 5: TILE_TREE (unused) */
 };
 
 unsigned short far *lcd_tex_table[NUM_TILES] = {
@@ -147,5 +169,6 @@ unsigned short far *lcd_tex_table[NUM_TILES] = {
     (unsigned short far *)lcd_tex_stone,    /* 1: TILE_STONE */
     (unsigned short far *)lcd_tex_brick,    /* 2: TILE_BRICK */
     (unsigned short far *)lcd_tex_wood,     /* 3: TILE_WOOD  */
-    (unsigned short far *)lcd_tex_log       /* 4: TILE_LOG   */
+    (unsigned short far *)lcd_tex_log,      /* 4: TILE_LOG   */
+    (unsigned short far *)lcd_tex_tree      /* 5: TILE_TREE  */
 };

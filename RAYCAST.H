@@ -75,7 +75,13 @@ typedef unsigned short far *VIDMEM;
 #define TILE_BRICK   2
 #define TILE_WOOD    3
 #define TILE_LOG     4
-#define NUM_TILES    5
+#define TILE_TREE    5
+#define NUM_TILES    6
+
+/* Sprite tile helpers */
+#define TILE_IS_SPRITE(t) ((t) == TILE_TREE)
+#define MAX_SPRITES  16     /* max visible sprites per frame */
+#define SPRITE_MAX_DIST  INT2FIX(8)  /* sprites vanish beyond 8 tiles */
 
 /* ================================================================
    Map structure - supports 16x16 up to 256x256
@@ -198,6 +204,7 @@ void init_video(void);
 void restore_video(void);
 void set_columns(unsigned char cols);
 void render_frame(RayHit hits[]);
+void render_sprites(Player *p, Map *m, RayHit hits[]);
 void flip_page(void);
 
 /* RCTEX.C - texture data */
