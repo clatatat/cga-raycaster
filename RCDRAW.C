@@ -150,8 +150,9 @@ void render_frame(RayHit hits[])
         unsigned short ceil_cell, floor_cell;
         active_far = settings.lcd_palette ? lcd_far_table : far_table;
         active_half = settings.lcd_palette ? lcd_half_table : half_table;
-        ceil_cell  = CEIL_CELL;
-        floor_cell = settings.draw_floorceil ? FLOOR_CELL : BLANK_CELL;
+        ceil_cell  = eng_debug ? dbg_ceil_cell  : CEIL_CELL;
+        floor_cell = eng_debug ? dbg_floor_cell :
+                     (settings.draw_floorceil ? FLOOR_CELL : BLANK_CELL);
 
     for (x = 0; x < cols; x++)
     {

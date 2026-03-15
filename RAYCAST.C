@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "raycast.h"
 
 /* Global settings and controls with defaults */
@@ -15,6 +16,11 @@ unsigned char keyflag1 = 0;
 unsigned char keyflag2 = 0;
 unsigned char keyflag3 = 0;
 unsigned char keyflag4 = 0;
+
+/* Debug mode globals */
+unsigned char eng_debug = 0;
+unsigned short dbg_ceil_cell  = 0x0000;  /* TC(' ', 0x00) */
+unsigned short dbg_floor_cell = 0x08B0;  /* TC(0xB0, 0x08) */
 
 /* Ray hit buffer - sized for max columns */
 static RayHit hits[MAX_COLS];
@@ -52,6 +58,21 @@ int main(void)
     /* Load saved options if OPTIONS.TXT exists */
     load_options();
 
+    /* Check for ENG-DEBUG=1 on last line of OPTIONS.TXT */
+    {
+        FILE *f = fopen("OPTIONS.TXT", "r");
+        if (f) {
+            char line[32];
+            char last[32];
+            last[0] = '\0';
+            while (fgets(line, sizeof(line), f))
+                strcpy(last, line);
+            fclose(f);
+            if (strncmp(last, "ENG-DEBUG=1", 11) == 0)
+                eng_debug = 1;
+        }
+    }
+
     /* Switch to CGA text mode and install keyboard ISR */
     init_video();
     install_keyboard();
@@ -65,6 +86,13 @@ int main(void)
             result = show_menu();
             if (result == 0) break;     /* quit selected */
             /* Resume: reinit video (clears menu, resets pages) */
+            set_columns(settings.columns);
+            continue;
+        }
+
+        /* Z = debug menu (only if ENG-DEBUG=1) */
+        if (eng_debug && key_state[SC_Z]) {
+            show_debug_menu();
             set_columns(settings.columns);
             continue;
         }

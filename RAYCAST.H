@@ -157,6 +157,7 @@ typedef struct {
 #define SC_I         0x17
 #define SC_O         0x18
 #define SC_P         0x19
+#define SC_Z         0x2C
 #define SC_SPACE     0x39
 
 /* ================================================================
@@ -178,6 +179,11 @@ typedef struct {
 } Settings;
 
 extern Settings settings;
+
+/* Debug mode - activated by ENG-DEBUG=1 in OPTIONS.TXT */
+extern unsigned char eng_debug;
+extern unsigned short dbg_ceil_cell;   /* override ceiling VRAM word */
+extern unsigned short dbg_floor_cell;  /* override floor VRAM word   */
 
 /* ================================================================
    Controls - rebindable key scan codes
@@ -240,6 +246,7 @@ unsigned char map_get(Map *m, int x, int y);
 
 /* RCMENU.C - options menu */
 int show_menu(void);
+int  show_debug_menu(void);
 void save_options(void);
 void load_options(void);
 

@@ -296,6 +296,8 @@ void save_options(void)
     fprintf(f, "%d\n", (int)controls.sc_quaternary);
     fprintf(f, "%d\n", (int)settings.enhanced_prec);
     fprintf(f, "%d\n", (int)settings.draw_floorceil);
+    if (eng_debug)
+        fprintf(f, "ENG-DEBUG=1\n");
     fclose(f);
 }
 
@@ -411,4 +413,176 @@ int show_menu(void)
             draw_menu(scr, cols, sel);
         }
     }
+}
+
+/*-----------------------------------------------------------------
+  Debug menu - hex input helpers
+-----------------------------------------------------------------*/
+
+/* Convert hex char to nibble value, -1 if invalid */
+static int hex_val(unsigned char sc)
+{
+    if (sc >= 0x02 && sc <= 0x0A) return sc - 1;  /* 1-9 */
+    if (sc == 0x0B) return 0;                       /* 0 key */
+    if (sc == 0x1E) return 0xA;  /* A */
+    if (sc == 0x30) return 0xB;  /* B */
+    if (sc == 0x2E) return 0xC;  /* C */
+    if (sc == 0x20) return 0xD;  /* D */
+    if (sc == 0x12) return 0xE;  /* E */
+    if (sc == 0x21) return 0xF;  /* F */
+    return -1;
+}
+
+static const char hex_chars[] = "0123456789ABCDEF";
+
+/* Format a byte as 0xNN into buf (must be 5+ chars) */
+static void fmt_hex(char *buf, unsigned char val)
+{
+    buf[0] = '0'; buf[1] = 'x';
+    buf[2] = hex_chars[(val >> 4) & 0xF];
+    buf[3] = hex_chars[val & 0xF];
+    buf[4] = '\0';
+}
+
+/* Read a 2-digit hex value from keyboard. Shows "0x__" at (row,col).
+   Returns the byte value entered. ESC cancels (returns old value). */
+static unsigned char input_hex(VIDMEM scr, int cols,
+                               int row, int col, unsigned char old)
+{
+    unsigned char hi, lo, sc;
+    int v;
+
+    v_puts(scr, cols, row, col, "0x__", AT_VALUE);
+
+    /* High nibble */
+    for (;;) {
+        sc = wait_any_key();
+        if (sc == SC_ESC) return old;
+        v = hex_val(sc);
+        if (v >= 0) { hi = (unsigned char)v; break; }
+    }
+    v_putch(scr, cols, row, col + 2, hex_chars[hi], AT_VALUE);
+
+    /* Wait for release */
+    while (key_state[sc]) ;
+
+    /* Low nibble */
+    for (;;) {
+        sc = wait_any_key();
+        if (sc == SC_ESC) return old;
+        v = hex_val(sc);
+        if (v >= 0) { lo = (unsigned char)v; break; }
+    }
+    v_putch(scr, cols, row, col + 3, hex_chars[lo], AT_VALUE);
+
+    while (key_state[sc]) ;
+
+    return (hi << 4) | lo;
+}
+
+/*-----------------------------------------------------------------
+  show_debug_menu - Debug tools menu (Z key, requires ENG-DEBUG=1)
+  Currently: edit floor/ceiling char and color attribute.
+  Returns 1 always (resume game).
+-----------------------------------------------------------------*/
+#define DM_CEIL_CHAR  0
+#define DM_CEIL_ATTR  1
+#define DM_FLOOR_CHAR 2
+#define DM_FLOOR_ATTR 3
+#define DM_BACK       4
+#define DM_ITEMS      5
+
+int show_debug_menu(void)
+{
+    static const int dm_rows[DM_ITEMS] = { 5, 6, 8, 9, 11 };
+    VIDMEM scr = VMEM_PAGE0;
+    int cols = settings.columns;
+    int sel = 0;
+    int vcol;
+    union REGS r;
+
+    unsigned char cc, ca, fc, fa;  /* ceil char/attr, floor char/attr */
+
+    /* Decompose current VRAM words */
+    cc = (unsigned char)(dbg_ceil_cell & 0xFF);
+    ca = (unsigned char)(dbg_ceil_cell >> 8);
+    fc = (unsigned char)(dbg_floor_cell & 0xFF);
+    fa = (unsigned char)(dbg_floor_cell >> 8);
+
+    vcol = (cols == 80) ? 36 : 20;
+
+    /* Show page 0 */
+    r.h.ah = BIOS_SETPAGE;
+    r.h.al = 0;
+    int86(VIDEO_INT, &r, &r);
+
+    for (;;) {
+        unsigned char key;
+        char hbuf[6];
+        int ccol = cols - 2;
+
+        v_clear(scr, cols);
+
+        { int c = (cols - 19) / 2;
+          v_puts(scr, cols, 1, c, "=== Debug Tools ===", AT_TITLE); }
+
+        v_puts(scr, cols, 3, 2, "-- Ceiling --", AT_DIM);
+
+        v_puts(scr, cols, 5, 2, "Char:", AT_LABEL);
+        fmt_hex(hbuf, cc);
+        v_puts(scr, cols, 5, vcol, hbuf, AT_VALUE);
+        v_putch(scr, cols, 5, vcol + 5, cc, ca);  /* preview */
+
+        v_puts(scr, cols, 6, 2, "Color:", AT_LABEL);
+        fmt_hex(hbuf, ca);
+        v_puts(scr, cols, 6, vcol, hbuf, AT_VALUE);
+
+        v_puts(scr, cols, 7, 2, "-- Floor --", AT_DIM);
+
+        v_puts(scr, cols, 8, 2, "Char:", AT_LABEL);
+        fmt_hex(hbuf, fc);
+        v_puts(scr, cols, 8, vcol, hbuf, AT_VALUE);
+        v_putch(scr, cols, 8, vcol + 5, fc, fa);  /* preview */
+
+        v_puts(scr, cols, 9, 2, "Color:", AT_LABEL);
+        fmt_hex(hbuf, fa);
+        v_puts(scr, cols, 9, vcol, hbuf, AT_VALUE);
+
+        v_puts(scr, cols, 11, 2, "Back", AT_LABEL);
+
+        /* Cursor */
+        v_putch(scr, cols, dm_rows[sel], ccol, 0xDB, AT_CURSOR);
+
+        v_puts(scr, cols, 13, 2, "ENTER=edit hex  ESC=back", AT_DIM);
+
+        key = menu_wait_key();
+
+        if (key == SC_ESC) break;
+        if (key == SC_UP && sel > 0) sel--;
+        if (key == SC_DOWN && sel < DM_ITEMS - 1) sel++;
+
+        if (key == SC_ENTER) {
+            switch (sel) {
+            case DM_CEIL_CHAR:
+                cc = input_hex(scr, cols, 5, vcol, cc);
+                break;
+            case DM_CEIL_ATTR:
+                ca = input_hex(scr, cols, 6, vcol, ca);
+                break;
+            case DM_FLOOR_CHAR:
+                fc = input_hex(scr, cols, 8, vcol, fc);
+                break;
+            case DM_FLOOR_ATTR:
+                fa = input_hex(scr, cols, 9, vcol, fa);
+                break;
+            case DM_BACK:
+                goto done;
+            }
+        }
+    }
+done:
+    /* Pack back into VRAM words */
+    dbg_ceil_cell  = TC(cc, ca);
+    dbg_floor_cell = TC(fc, fa);
+    return 1;
 }
