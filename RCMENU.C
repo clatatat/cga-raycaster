@@ -331,6 +331,10 @@ void load_options(void)
     /* Sanitize loaded values */
     if (settings.columns != 40 && settings.columns != 80)
         settings.columns = 40;
+    settings.lcd_palette    = settings.lcd_palette    ? 1 : 0;
+    settings.far_shade      = settings.far_shade      ? 1 : 0;
+    settings.enhanced_prec  = settings.enhanced_prec  ? 1 : 0;
+    settings.draw_floorceil = settings.draw_floorceil ? 1 : 0;
 }
 
 /*-----------------------------------------------------------------
@@ -370,7 +374,7 @@ int show_menu(void)
                 save_options();
                 return 1;
             case MI_LCD:
-                settings.lcd_palette ^= 1;
+                settings.lcd_palette = !settings.lcd_palette;
                 break;
             case MI_COLUMNS:
                 settings.columns = (settings.columns == 40) ? 80 : 40;
@@ -389,13 +393,13 @@ int show_menu(void)
                 break;
             }
             case MI_FARSHADE:
-                settings.far_shade ^= 1;
+                settings.far_shade = !settings.far_shade;
                 break;
             case MI_ENHPREC:
-                settings.enhanced_prec ^= 1;
+                settings.enhanced_prec = !settings.enhanced_prec;
                 break;
             case MI_FLRCEIL:
-                settings.draw_floorceil ^= 1;
+                settings.draw_floorceil = !settings.draw_floorceil;
                 break;
             case MI_CONTROLS:
                 show_controls(scr, cols);
