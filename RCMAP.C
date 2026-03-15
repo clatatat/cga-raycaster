@@ -88,3 +88,14 @@ unsigned char map_get(Map *m, int x, int y)
         return TILE_STONE;
     return m->data[(unsigned)y * m->w + (unsigned)x];
 }
+
+/*-----------------------------------------------------------------
+  map_set - Set tile at (x, y), bounds-checked.
+  Ignores writes to out-of-bounds coordinates.
+-----------------------------------------------------------------*/
+void map_set(Map *m, int x, int y, unsigned char tile)
+{
+    if (x < 0 || x >= (int)m->w || y < 0 || y >= (int)m->h)
+        return;
+    m->data[(unsigned)y * m->w + (unsigned)x] = tile;
+}

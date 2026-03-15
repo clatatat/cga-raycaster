@@ -158,6 +158,7 @@ typedef struct {
 #define SC_O         0x18
 #define SC_P         0x19
 #define SC_Z         0x2C
+#define SC_BACKSLASH 0x2B
 #define SC_SPACE     0x39
 
 /* ================================================================
@@ -184,6 +185,10 @@ extern Settings settings;
 extern unsigned char eng_debug;
 extern unsigned short dbg_ceil_cell;   /* override ceiling VRAM word */
 extern unsigned short dbg_floor_cell;  /* override floor VRAM word   */
+extern unsigned char  dbg_place_tile;  /* tile to place with P key   */
+
+/* 80-column performance boost - activated by ENG-80COLPERF=1 */
+extern unsigned char eng_80colperf;
 
 /* ================================================================
    Controls - rebindable key scan codes
@@ -243,10 +248,13 @@ extern unsigned char key_state[];
 /* RCMAP.C - map data and access */
 void map_init(Map *m);
 unsigned char map_get(Map *m, int x, int y);
+void map_set(Map *m, int x, int y, unsigned char tile);
 
 /* RCMENU.C - options menu */
 int show_menu(void);
 int  show_debug_menu(void);
+int  show_tile_menu(void);
+void show_minimap(Player *p, Map *m);
 void save_options(void);
 void load_options(void);
 

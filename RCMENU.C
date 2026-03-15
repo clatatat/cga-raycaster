@@ -296,6 +296,8 @@ void save_options(void)
     fprintf(f, "%d\n", (int)controls.sc_quaternary);
     fprintf(f, "%d\n", (int)settings.enhanced_prec);
     fprintf(f, "%d\n", (int)settings.draw_floorceil);
+    if (eng_80colperf)
+        fprintf(f, "ENG-80COLPERF=1\n");
     if (eng_debug)
         fprintf(f, "ENG-DEBUG=1\n");
     fclose(f);
@@ -585,4 +587,183 @@ done:
     dbg_ceil_cell  = TC(cc, ca);
     dbg_floor_cell = TC(fc, fa);
     return 1;
+}
+
+/*-----------------------------------------------------------------
+  show_tile_menu - Tile picker for debug placement (O key).
+  Sets dbg_place_tile. Returns 1 always.
+-----------------------------------------------------------------*/
+int show_tile_menu(void)
+{
+    static const char *tile_names[NUM_TILES] = {
+        "Air (empty)", "Stone", "Brick", "Wood", "Log",
+        "Tree", "Dirt", "Grass", "Sand", "Rocks", "Glass"
+    };
+    VIDMEM scr = VMEM_PAGE0;
+    int cols = settings.columns;
+    int sel = (int)dbg_place_tile;
+    union REGS r;
+
+    r.h.ah = BIOS_SETPAGE;
+    r.h.al = 0;
+    int86(VIDEO_INT, &r, &r);
+
+    for (;;) {
+        unsigned char key;
+        int i, ccol = cols - 2;
+        int c;
+
+        v_clear(scr, cols);
+        c = (cols - 20) / 2;
+        v_puts(scr, cols, 1, c, "=== Tile Picker ===", AT_TITLE);
+
+        for (i = 0; i < NUM_TILES; i++) {
+            v_puts(scr, cols, 3 + i, 2, tile_names[i], AT_LABEL);
+            if (i == (int)dbg_place_tile)
+                v_puts(scr, cols, 3 + i, 16, "<cur>", AT_DIM);
+        }
+
+        v_putch(scr, cols, 3 + sel, ccol, 0xDB, AT_CURSOR);
+        v_puts(scr, cols, 3 + NUM_TILES + 1, 2, "ENTER=select  ESC=back", AT_DIM);
+
+        key = menu_wait_key();
+
+        if (key == SC_ESC) return 1;
+        if (key == SC_UP && sel > 0) sel--;
+        if (key == SC_DOWN && sel < NUM_TILES - 1) sel++;
+        if (key == SC_ENTER) {
+            dbg_place_tile = (unsigned char)sel;
+            return 1;
+        }
+    }
+}
+
+/*-----------------------------------------------------------------
+  CGA mode 4 graphics helpers for minimap
+-----------------------------------------------------------------*/
+
+/* Write a single pixel in CGA mode 4 (320x200, 2bpp) */
+static void gfx_pixel(int x, int y, unsigned char color)
+{
+    unsigned char far *base;
+    unsigned int offset;
+    int shift;
+
+    if ((unsigned)x >= 320 || (unsigned)y >= 200) return;
+
+    base = (y & 1) ? (unsigned char far *)((0xB800L << 16) | 0x2000L)
+                    : (unsigned char far *)(0xB800L << 16);
+    offset = (unsigned)(y >> 1) * 80 + (unsigned)(x >> 2);
+    shift = 6 - ((x & 3) << 1);
+    base[offset] = (base[offset] & ~(3 << shift))
+                 | (unsigned char)(color << shift);
+}
+
+/* Fill a rectangle in CGA mode 4 */
+static void gfx_rect(int x0, int y0, int w, int h, unsigned char color)
+{
+    int x, y;
+    for (y = y0; y < y0 + h; y++) {
+        unsigned char far *base;
+        unsigned int row_off;
+        if ((unsigned)y >= 200) continue;
+        base = (y & 1) ? (unsigned char far *)((0xB800L << 16) | 0x2000L)
+                       : (unsigned char far *)(0xB800L << 16);
+        row_off = (unsigned)(y >> 1) * 80;
+        for (x = x0; x < x0 + w; x++) {
+            unsigned int off;
+            int shift;
+            if ((unsigned)x >= 320) continue;
+            off = row_off + (unsigned)(x >> 2);
+            shift = 6 - ((x & 3) << 1);
+            base[off] = (base[off] & ~(3 << shift))
+                      | (unsigned char)(color << shift);
+        }
+    }
+}
+
+/* Map tile type to CGA 4-color index (palette 1) */
+static unsigned char tile_to_color(unsigned char t)
+{
+    switch (t) {
+    case TILE_EMPTY: return 0;  /* black          */
+    case TILE_STONE: return 3;  /* white          */
+    case TILE_BRICK: return 2;  /* magenta        */
+    case TILE_WOOD:  return 1;  /* cyan           */
+    case TILE_LOG:   return 1;
+    case TILE_TREE:  return 1;
+    case TILE_DIRT:  return 2;
+    case TILE_GRASS: return 1;
+    case TILE_SAND:  return 2;
+    case TILE_ROCKS: return 3;
+    case TILE_GLASS: return 1;
+    default:         return 0;
+    }
+}
+
+/*-----------------------------------------------------------------
+  show_minimap - Render top-down map in CGA mode 4 (320x200, 4-color).
+  Switches video mode, draws map + player, waits for key.
+  Caller is responsible for restoring text mode via set_columns().
+-----------------------------------------------------------------*/
+void show_minimap(Player *p, Map *m)
+{
+    union REGS r;
+    int mx, my, ox, oy, px, py;
+    int scale;
+    int mw = (int)m->w;
+    int mh = (int)m->h;
+
+    /* Compute scale: largest square that fits 320x200 */
+    scale = 200 / mh;
+    if ((320 / mw) < scale) scale = 320 / mw;
+    if (scale < 1) scale = 1;
+
+    ox = (320 - mw * scale) / 2;
+    oy = (200 - mh * scale) / 2;
+
+    /* Switch to CGA mode 4 (320x200, 4-color) */
+    r.h.ah = BIOS_SETMODE;
+    r.h.al = 0x04;
+    int86(VIDEO_INT, &r, &r);
+
+    /* Select palette 1: cyan / magenta / white */
+    r.h.ah = 0x0B;
+    r.h.bh = 1;
+    r.h.bl = 1;
+    int86(VIDEO_INT, &r, &r);
+
+    /* Draw map tiles */
+    for (my = 0; my < mh; my++) {
+        for (mx = 0; mx < mw; mx++) {
+            unsigned char tile = m->data[(unsigned)my * m->w + (unsigned)mx];
+            unsigned char color = tile_to_color(tile);
+            gfx_rect(ox + mx * scale, oy + my * scale,
+                      scale, scale, color);
+        }
+    }
+
+    /* Draw player position as white cross */
+    px = ox + FIX2INT(p->px) * scale + scale / 2;
+    py = oy + FIX2INT(p->py) * scale + scale / 2;
+    gfx_pixel(px, py, 3);
+    gfx_pixel(px - 1, py, 3);
+    gfx_pixel(px + 1, py, 3);
+    gfx_pixel(px, py - 1, 3);
+    gfx_pixel(px, py + 1, 3);
+
+    /* Draw facing direction: 3-pixel line from player center */
+    {
+        int dx = cos_tab[p->angle];
+        int dy = sin_tab[p->angle];
+        int i;
+        for (i = 2; i <= 4; i++) {
+            int fx = px + (int)((long)dx * i / 256);
+            int fy = py + (int)((long)dy * i / 256);
+            gfx_pixel(fx, fy, 2);  /* magenta direction indicator */
+        }
+    }
+
+    /* Wait for any key to return */
+    wait_any_key();
 }

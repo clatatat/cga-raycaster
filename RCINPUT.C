@@ -86,6 +86,18 @@ int process_input(Player *p, Map *m)
     short moveX, moveY;
     short strafeX, strafeY;
     fix8 newX, newY;
+    short moveSpd, strafeSpd, turnSpd;
+
+    /* Double speeds in 80-col performance mode */
+    if (eng_80colperf && settings.columns == 80) {
+        moveSpd   = MOVE_SPEED * 2;
+        strafeSpd = STRAFE_SPEED * 2;
+        turnSpd   = TURN_SPEED * 2;
+    } else {
+        moveSpd   = MOVE_SPEED;
+        strafeSpd = STRAFE_SPEED;
+        turnSpd   = TURN_SPEED;
+    }
 
     /* ESC = open menu */
     if (key_state[SC_ESC])
@@ -93,10 +105,10 @@ int process_input(Player *p, Map *m)
 
     /* Turn left/right */
     if (key_state[controls.sc_turn_left])
-        p->angle -= TURN_SPEED;
+        p->angle -= turnSpd;
 
     if (key_state[controls.sc_turn_right])
-        p->angle += TURN_SPEED;
+        p->angle += turnSpd;
 
     /* Movement direction from angle */
     moveX = cos_tab[p->angle];
@@ -108,8 +120,8 @@ int process_input(Player *p, Map *m)
 
     /* Forward */
     if (key_state[controls.sc_forward]) {
-        newX = p->px + fix_mul(MOVE_SPEED, moveX);
-        newY = p->py + fix_mul(MOVE_SPEED, moveY);
+        newX = p->px + fix_mul(moveSpd, moveX);
+        newY = p->py + fix_mul(moveSpd, moveY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
             p->px = newX;
         if (map_get(m, FIX2INT(p->px), FIX2INT(newY)) == TILE_EMPTY)
@@ -118,8 +130,8 @@ int process_input(Player *p, Map *m)
 
     /* Backward */
     if (key_state[controls.sc_backward]) {
-        newX = p->px - fix_mul(MOVE_SPEED, moveX);
-        newY = p->py - fix_mul(MOVE_SPEED, moveY);
+        newX = p->px - fix_mul(moveSpd, moveX);
+        newY = p->py - fix_mul(moveSpd, moveY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
             p->px = newX;
         if (map_get(m, FIX2INT(p->px), FIX2INT(newY)) == TILE_EMPTY)
@@ -128,8 +140,8 @@ int process_input(Player *p, Map *m)
 
     /* Strafe left */
     if (key_state[controls.sc_strafe_left]) {
-        newX = p->px - fix_mul(STRAFE_SPEED, strafeX);
-        newY = p->py - fix_mul(STRAFE_SPEED, strafeY);
+        newX = p->px - fix_mul(strafeSpd, strafeX);
+        newY = p->py - fix_mul(strafeSpd, strafeY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
             p->px = newX;
         if (map_get(m, FIX2INT(p->px), FIX2INT(newY)) == TILE_EMPTY)
@@ -138,8 +150,8 @@ int process_input(Player *p, Map *m)
 
     /* Strafe right */
     if (key_state[controls.sc_strafe_right]) {
-        newX = p->px + fix_mul(STRAFE_SPEED, strafeX);
-        newY = p->py + fix_mul(STRAFE_SPEED, strafeY);
+        newX = p->px + fix_mul(strafeSpd, strafeX);
+        newY = p->py + fix_mul(strafeSpd, strafeY);
         if (map_get(m, FIX2INT(newX), FIX2INT(p->py)) == TILE_EMPTY)
             p->px = newX;
         if (map_get(m, FIX2INT(p->px), FIX2INT(newY)) == TILE_EMPTY)
