@@ -10,14 +10,19 @@
 #define WW TILE_WOOD
 #define LL TILE_LOG
 #define TT TILE_TREE
+#define DI TILE_DIRT
+#define GR TILE_GRASS
+#define SA TILE_SAND
+#define RO TILE_ROCKS
+#define GL TILE_GLASS
 
 /* Default 32x32 map: outer wall border, interior walls for testing */
 /* Player starts at approximately (3, 3) facing east               */
 static const unsigned char default_map[32 * 32] = {
 /*       0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 */
-/* 0 */ SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,
+/* 0 */ SS,SS,SS,SS,SS,SS,SS,SS,RO,RO,RO,RO,RO,RO,RO,RO,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,SS,
 /* 1 */ SS,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,SS,
-/* 2 */ SS,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,SS,
+/* 2 */ SS,__,__,__,__,__,__,__,__,__,__,__,__,__,DI,GR,SA,RO,GL,__,__,__,__,__,__,__,__,__,__,__,__,SS,
 /* 3 */ SS,__,__,__,__,__,__,__,__,__,__,__,TT,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,SS,
 /* 4 */ SS,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,SS,
 /* 5 */ SS,__,__,__,__,BB,BB,BB,BB,BB,__,__,__,__,__,__,__,__,__,__,SS,SS,SS,__,__,__,__,__,__,__,__,SS,
@@ -55,6 +60,11 @@ static const unsigned char default_map[32 * 32] = {
 #undef WW
 #undef LL
 #undef TT
+#undef DI
+#undef GR
+#undef SA
+#undef RO
+#undef GL
 
 /*-----------------------------------------------------------------
   map_init - Initialize map structure with the default 32x32 level

@@ -141,34 +141,130 @@ static const unsigned short lcd_tex_tree[TEX_SIZE][TEX_SIZE] = {
 };
 
 /* ================================================================
+   DIRT TEXTURE - placeholder: all black, user to fill in.
+   ================================================================ */
+#define LCD_FAR_DIRT    TC(' ', 0x0F)
+#define LCD_HALF_DIRT   0x0F
+static const unsigned short lcd_tex_dirt[TEX_SIZE][TEX_SIZE] = {
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) }
+};
+
+/* ================================================================
+   GRASS TEXTURE - placeholder: all black, user to fill in.
+   ================================================================ */
+#define LCD_FAR_GRASS   TC(' ', 0x0F)
+#define LCD_HALF_GRASS  0x0F
+static const unsigned short lcd_tex_grass[TEX_SIZE][TEX_SIZE] = {
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) }
+};
+
+/* ================================================================
+   SAND TEXTURE - placeholder: all black, user to fill in.
+   ================================================================ */
+#define LCD_FAR_SAND    TC(' ', 0x0F)
+#define LCD_HALF_SAND   0x0F
+static const unsigned short lcd_tex_sand[TEX_SIZE][TEX_SIZE] = {
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) }
+};
+
+/* ================================================================
+   ROCKS TEXTURE - placeholder: all black, user to fill in.
+   ================================================================ */
+#define LCD_FAR_ROCKS   TC(' ', 0x0F)
+#define LCD_HALF_ROCKS  0x0F
+static const unsigned short lcd_tex_rocks[TEX_SIZE][TEX_SIZE] = {
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) }
+};
+
+/* ================================================================
+   GLASS TEXTURE - placeholder: all black, user to fill in.
+   Set individual texels to 0x0000 to make them transparent.
+   ================================================================ */
+#define LCD_FAR_GLASS   TC(' ', 0x0F)
+#define LCD_HALF_GLASS  0x0F
+static const unsigned short lcd_tex_glass[TEX_SIZE][TEX_SIZE] = {
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) },
+    { TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F), TC(' ',0x0F) }
+};
+
+/* ================================================================
    Texture lookup table - indexed by tile type.
    Entry 0 (TILE_EMPTY) points to stone as a fallback.
    ================================================================ */
 /* Single-cell fallback used when tile is more than 8 tiles away */
 unsigned short lcd_far_table[NUM_TILES] = {
-    LCD_FAR_STONE,   /* 0: TILE_EMPTY (fallback) */
-    LCD_FAR_STONE,   /* 1: TILE_STONE */
-    LCD_FAR_BRICK,   /* 2: TILE_BRICK */
-    LCD_FAR_WOOD,    /* 3: TILE_WOOD  */
-    LCD_FAR_LOG,     /* 4: TILE_LOG   */
-    LCD_FAR_TREE     /* 5: TILE_TREE (unused) */
+    LCD_FAR_STONE,   /*  0: TILE_EMPTY (fallback) */
+    LCD_FAR_STONE,   /*  1: TILE_STONE */
+    LCD_FAR_BRICK,   /*  2: TILE_BRICK */
+    LCD_FAR_WOOD,    /*  3: TILE_WOOD  */
+    LCD_FAR_LOG,     /*  4: TILE_LOG   */
+    LCD_FAR_TREE,    /*  5: TILE_TREE (unused) */
+    LCD_FAR_DIRT,    /*  6: TILE_DIRT  */
+    LCD_FAR_GRASS,   /*  7: TILE_GRASS */
+    LCD_FAR_SAND,    /*  8: TILE_SAND  */
+    LCD_FAR_ROCKS,   /*  9: TILE_ROCKS */
+    LCD_FAR_GLASS    /* 10: TILE_GLASS (unused) */
 };
 
 /* Half-block edge attribute per tile (foreground color on black bg) */
 unsigned char lcd_half_table[NUM_TILES] = {
-    LCD_HALF_STONE,  /* 0: TILE_EMPTY (fallback) */
-    LCD_HALF_STONE,  /* 1: TILE_STONE */
-    LCD_HALF_BRICK,  /* 2: TILE_BRICK */
-    LCD_HALF_WOOD,   /* 3: TILE_WOOD  */
-    LCD_HALF_LOG,    /* 4: TILE_LOG   */
-    LCD_HALF_TREE    /* 5: TILE_TREE (unused) */
+    LCD_HALF_STONE,  /*  0: TILE_EMPTY (fallback) */
+    LCD_HALF_STONE,  /*  1: TILE_STONE */
+    LCD_HALF_BRICK,  /*  2: TILE_BRICK */
+    LCD_HALF_WOOD,   /*  3: TILE_WOOD  */
+    LCD_HALF_LOG,    /*  4: TILE_LOG   */
+    LCD_HALF_TREE,   /*  5: TILE_TREE (unused) */
+    LCD_HALF_DIRT,   /*  6: TILE_DIRT  */
+    LCD_HALF_GRASS,  /*  7: TILE_GRASS */
+    LCD_HALF_SAND,   /*  8: TILE_SAND  */
+    LCD_HALF_ROCKS,  /*  9: TILE_ROCKS */
+    LCD_HALF_GLASS   /* 10: TILE_GLASS (unused) */
 };
 
 unsigned short far *lcd_tex_table[NUM_TILES] = {
-    (unsigned short far *)lcd_tex_stone,    /* 0: TILE_EMPTY (fallback) */
-    (unsigned short far *)lcd_tex_stone,    /* 1: TILE_STONE */
-    (unsigned short far *)lcd_tex_brick,    /* 2: TILE_BRICK */
-    (unsigned short far *)lcd_tex_wood,     /* 3: TILE_WOOD  */
-    (unsigned short far *)lcd_tex_log,      /* 4: TILE_LOG   */
-    (unsigned short far *)lcd_tex_tree      /* 5: TILE_TREE  */
+    (unsigned short far *)lcd_tex_stone,    /*  0: TILE_EMPTY (fallback) */
+    (unsigned short far *)lcd_tex_stone,    /*  1: TILE_STONE */
+    (unsigned short far *)lcd_tex_brick,    /*  2: TILE_BRICK */
+    (unsigned short far *)lcd_tex_wood,     /*  3: TILE_WOOD  */
+    (unsigned short far *)lcd_tex_log,      /*  4: TILE_LOG   */
+    (unsigned short far *)lcd_tex_tree,     /*  5: TILE_TREE  */
+    (unsigned short far *)lcd_tex_dirt,     /*  6: TILE_DIRT  */
+    (unsigned short far *)lcd_tex_grass,    /*  7: TILE_GRASS */
+    (unsigned short far *)lcd_tex_sand,     /*  8: TILE_SAND  */
+    (unsigned short far *)lcd_tex_rocks,    /*  9: TILE_ROCKS */
+    (unsigned short far *)lcd_tex_glass     /* 10: TILE_GLASS */
 };

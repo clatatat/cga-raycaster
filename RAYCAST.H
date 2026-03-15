@@ -76,12 +76,20 @@ typedef unsigned short far *VIDMEM;
 #define TILE_WOOD    3
 #define TILE_LOG     4
 #define TILE_TREE    5
-#define NUM_TILES    6
+#define TILE_DIRT    6
+#define TILE_GRASS   7
+#define TILE_SAND    8
+#define TILE_ROCKS   9
+#define TILE_GLASS  10
+#define NUM_TILES   11
 
 /* Sprite tile helpers */
 #define TILE_IS_SPRITE(t) ((t) == TILE_TREE)
 #define MAX_SPRITES  16     /* max visible sprites per frame */
 #define SPRITE_MAX_DIST  INT2FIX(8)  /* sprites vanish beyond 8 tiles */
+
+/* Glass tile: ray passes through, rendered with texel 0 = transparent */
+#define TILE_IS_GLASS(t)  ((t) == TILE_GLASS)
 
 /* ================================================================
    Map structure - supports 16x16 up to 256x256
@@ -111,6 +119,9 @@ typedef struct {
     unsigned char tile;     /* tile type that was hit             */
     unsigned char texX;     /* texture X column (0 .. TEX_SIZE-1) */
     unsigned char side;     /* 0 = vertical wall, 1 = horizontal */
+    fix8 glass_dist;        /* depth of glass overlay (0 = none) */
+    unsigned char glass_tile;
+    unsigned char glass_texX;
 } RayHit;
 
 /* ================================================================

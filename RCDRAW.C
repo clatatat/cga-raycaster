@@ -267,6 +267,32 @@ void render_frame(RayHit hits[])
         for (y = drawEnd; y < SCREEN_H; y++)
             *(scr + y * cols + x) = floor_cell;
     }
+
+    /* Second pass: overlay glass tiles on top of rendered walls.
+       Texels with value 0 are transparent (show what is behind). */
+    for (x = 0; x < cols; x++) {
+        int gH, gS, gE;
+        short gStep, gPos;
+        unsigned short far *gTex;
+        unsigned short texel;
+        int texY;
+        if (hits[x].glass_dist == 0) continue;
+        gH = safe_div(WALL_CONST, hits[x].glass_dist) >> 8;
+        if (gH > SCREEN_H) gH = SCREEN_H;
+        if (gH < 1) gH = 1;
+        gS = (SCREEN_H - gH) >> 1;
+        gE = gS + gH;
+        gTex = active_tex[hits[x].glass_tile];
+        gStep = (short)((TEX_SIZE << 8) / gH);
+        gPos = 0;
+        for (y = gS; y < gE; y++) {
+            texY = (gPos >> 8) & TEX_MASK;
+            texel = gTex[texY * TEX_SIZE + hits[x].glass_texX];
+            if (texel != 0)
+                *(scr + y * cols + x) = texel;
+            gPos += gStep;
+        }
+    }
     }
 }
 

@@ -63,6 +63,7 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
         int startMapX, startMapY;
         int stepX, stepY;
         int side;
+        int glass_mapX, glass_mapY, glass_side;
         unsigned char tile;
         short camX;
 
@@ -109,6 +110,8 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
 
         /* DDA loop - step through grid lines until we hit a wall  */
         tile = TILE_EMPTY;
+        glass_mapX = -1; glass_mapY = -1; glass_side = -1;
+        hits[x].glass_dist = 0; hits[x].glass_tile = 0; hits[x].glass_texX = 0;
         while (tile == TILE_EMPTY)
         {
             /* Jump to next map square in X or Y direction */
@@ -144,6 +147,35 @@ void cast_rays(Player *p, Map *m, RayHit hits[])
             /* Rays pass through sprite tiles (rendered separately) */
             if (TILE_IS_SPRITE(tile))
                 tile = TILE_EMPTY;
+            /* Record first glass hit, then let ray continue through */
+            else if (TILE_IS_GLASS(tile) && glass_mapX < 0) {
+                glass_mapX = mapX; glass_mapY = mapY; glass_side = side;
+                hits[x].glass_tile = tile;
+                tile = TILE_EMPTY;
+            }
+        }
+
+        /* Compute glass hit depth and texture X if glass was encountered */
+        if (glass_mapX >= 0) {
+            fix8 gdist;
+            short wallHitFrac;
+            if (glass_side == 0) {
+                short num = INT2FIX(glass_mapX) - p->px;
+                if (stepX == -1) num += FIX_ONE;
+                gdist = safe_div(num, rayDirX);
+            } else {
+                short num = INT2FIX(glass_mapY) - p->py;
+                if (stepY == -1) num += FIX_ONE;
+                gdist = safe_div(num, rayDirY);
+            }
+            if (gdist < 1) gdist = 1;
+            if (glass_side == 0)
+                wallHitFrac = p->py + fix_mul(gdist, rayDirY);
+            else
+                wallHitFrac = p->px + fix_mul(gdist, rayDirX);
+            wallHitFrac = FIX_FRAC(wallHitFrac);
+            hits[x].glass_dist = gdist;
+            hits[x].glass_texX = (unsigned char)(wallHitFrac >> (8 - TEX_SHIFT));
         }
 
         /* No wall hit within render distance */
